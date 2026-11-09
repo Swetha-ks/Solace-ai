@@ -220,7 +220,6 @@ Solace AI is not a medical product and does not diagnose or treat anything. It i
 
 ## Documentation
 
-- [SUBMISSION.md](SUBMISSION.md) — submission pack, demo script, checklist
 - [HOW_TO_RUN.md](HOW_TO_RUN.md) — detailed local setup
 - [LICENSE](LICENSE) — MIT
 
