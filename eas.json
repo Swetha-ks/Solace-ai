@@ -17,12 +17,15 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://10.132.78.70:4000"
+        "EXPO_PUBLIC_API_URL": "https://solace-ai-api-40bu.onrender.com"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://solace-ai-api-40bu.onrender.com"
       }
     }
   },

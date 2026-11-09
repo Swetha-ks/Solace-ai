@@ -1,8 +1,14 @@
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+const MODEL = (process.env.GROQ_MODEL || 'openai/gpt-oss-120b').trim();
+
+function apiKey() {
+  // Hosting dashboards sometimes keep a trailing newline or space on pasted
+  // values, which makes the Authorization header invalid.
+  return (process.env.GROQ_API_KEY || '').trim();
+}
 
 export function hasGroqKey() {
-  return Boolean(process.env.GROQ_API_KEY);
+  return Boolean(apiKey());
 }
 
 /**
@@ -15,7 +21,8 @@ export async function chatCompletion({
   maxTokens = 900,
   json = true,
 }) {
-  if (!process.env.GROQ_API_KEY) {
+  const key = apiKey();
+  if (!key) {
     throw new Error('GROQ_API_KEY is not configured');
   }
 
@@ -26,7 +33,7 @@ export async function chatCompletion({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify(payload),
     });

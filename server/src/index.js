@@ -6,7 +6,7 @@ import conversationRoutes from './routes/conversations.js';
 import chatRoutes from './routes/chat.js';
 import moodRoutes from './routes/moods.js';
 import insightRoutes from './routes/insights.js';
-import { hasGroqKey } from './groq.js';
+import { hasGroqKey, chatCompletion } from './groq.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
@@ -22,6 +22,20 @@ app.get('/api/health', (req, res) => {
     model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
     time: new Date().toISOString(),
   });
+});
+
+app.get('/api/health/ai', async (req, res) => {
+  try {
+    const sample = await chatCompletion({
+      messages: [{ role: 'user', content: 'Reply with the single word OK.' }],
+      temperature: 0,
+      maxTokens: 60,
+      json: false,
+    });
+    res.json({ ok: true, sample: sample.slice(0, 80) });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: String(error.message).slice(0, 400) });
+  }
 });
 
 app.use('/api/auth', authRoutes);
