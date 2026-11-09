@@ -8,10 +8,10 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Modal,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -344,7 +344,7 @@ export default function ChatScreen({ onBack, onOpenBreathing }) {
       <View pointerEvents="none" style={[styles.orb, styles.orbTop]} />
       <View pointerEvents="none" style={[styles.orb, styles.orbBottom]} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.frame}>
           {/* Header */}
           <View style={styles.header}>

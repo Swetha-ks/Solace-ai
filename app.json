@@ -9,6 +9,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.solaceai.app",
+      "buildNumber": "3",
       "infoPlist": {
         "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
@@ -16,12 +17,13 @@
     },
     "android": {
       "package": "com.solaceai.app",
+      "versionCode": 3,
       "permissions": [
         "SCHEDULE_EXACT_ALARM",
         "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FDF9F3",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -42,6 +44,15 @@
         }
       ],
       "expo-speech-recognition",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FDF9F3",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 210,
+          "resizeMode": "contain"
+        }
+      ],
       [
         "expo-build-properties",
         {

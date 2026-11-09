@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Animated,
   Easing,
   Modal,
@@ -13,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -499,7 +499,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
       <View pointerEvents="none" style={[styles.orb, styles.orbTop]} />
       <View pointerEvents="none" style={[styles.orb, styles.orbBottom]} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.mobilePhoneFrame}>
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -545,7 +545,20 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
 
             {/* A note from Solace */}
             <Animated.View style={[styles.noteCard, rise]}>
-              <CompanionLight onPress={() => setIsVoiceModalOpen(true)} />
+              <View style={styles.noteHeadRow}>
+                <CompanionLight size={48} onPress={() => setIsVoiceModalOpen(true)} />
+                <View style={styles.noteHeadText}>
+                  <Text maxFontSizeMultiplier={1.2} style={styles.noteEyebrow}>
+                    A NOTE FROM SOLACE
+                  </Text>
+                  <Text
+                    maxFontSizeMultiplier={1.2}
+                    style={[styles.noteHeadSub, { fontFamily: serifItalic }]}
+                  >
+                    no rush, no agenda
+                  </Text>
+                </View>
+              </View>
 
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -554,9 +567,11 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
                 accessibilityRole="button"
                 accessibilityLabel="Talk with Solace"
               >
-                <Text style={styles.noteEyebrow}>A NOTE FROM SOLACE</Text>
-                <Text style={[styles.noteText, { fontFamily: serifItalic }]}>
-                  I’m here, with no rush. Tell me what today felt like — or we can just
+                <Text
+                  maxFontSizeMultiplier={1.15}
+                  style={[styles.noteText, { fontFamily: serifItalic }]}
+                >
+                  I'm here, with no rush. Tell me what today felt like - or we can just
                   sit in the quiet together.
                 </Text>
 
@@ -1651,21 +1666,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(233, 185, 160, 0.55)',
   },
   noteCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     backgroundColor: 'rgba(255, 253, 248, 0.78)',
     borderRadius: 26,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.9)',
     paddingVertical: 18,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     shadowColor: '#B0664A',
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
     elevation: 3,
   },
-  noteBody: { flex: 1, marginLeft: 8 },
+  noteHeadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noteHeadText: {
+    flex: 1,
+    marginLeft: 8,
+    minWidth: 0,
+  },
+  noteHeadSub: {
+    fontSize: 12,
+    color: 'rgba(42, 32, 51, 0.42)',
+    marginTop: 3,
+    letterSpacing: 0.1,
+  },
+  noteBody: { marginTop: 14 },
   noteEyebrow: {
     fontSize: 8.5,
     letterSpacing: 2,

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   Animated,
@@ -15,6 +14,7 @@ import {
   Platform,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -323,7 +323,7 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
       <View pointerEvents="none" style={[styles.orb, styles.orbTop]} />
       <View pointerEvents="none" style={[styles.orb, styles.orbBottom]} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}

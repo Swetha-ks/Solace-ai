@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +12,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -144,7 +144,7 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
       <View pointerEvents="none" style={[styles.orb, styles.orbBottom]} />
       <View pointerEvents="none" style={styles.horizon} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}

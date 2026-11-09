@@ -6,9 +6,11 @@ import {
   Text,
   SafeAreaView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
@@ -26,6 +28,16 @@ import {
 const AUTHED_SCREENS = ['home', 'chat', 'breathing', 'profile'];
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppShell />
+    </SafeAreaProvider>
+  );
+}
+
+function AppShell() {
+  const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === 'web';
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [booting, setBooting] = useState(true);
   const [user, setUser] = useState(null);
@@ -34,24 +46,40 @@ export default function App() {
     let mounted = true;
 
     (async () => {
+      let token = null;
       try {
-        const token = await getToken();
-        if (token) {
-          try {
-            const { user: me } = await authApi.me();
-            if (mounted) {
-              setUser(me);
-              setCurrentScreen('home');
-            }
-          } catch (e) {
-            await setToken(null);
-          }
-        }
+        token = await getToken();
       } catch (e) {
         // Ignore storage errors and fall back to the welcome flow.
-      } finally {
-        if (mounted) setBooting(false);
       }
+
+      if (!mounted) return;
+
+      // If a session exists, open Home immediately and verify it in the
+      // background. A sleeping backend should never hold someone on the
+      // splash screen for a minute.
+      if (token) {
+        setCurrentScreen('home');
+        setBooting(false);
+
+        authApi
+          .me()
+          .then(({ user: me }) => {
+            if (mounted) setUser(me);
+          })
+          .catch(async (error) => {
+            if (error?.status === 401) {
+              await setToken(null);
+              if (mounted) {
+                setUser(null);
+                setCurrentScreen('welcome');
+              }
+            }
+          });
+        return;
+      }
+
+      setBooting(false);
     })();
 
     return () => {
@@ -118,8 +146,9 @@ export default function App() {
     <View style={styles.outerWrapper}>
       <StatusBar style="dark" />
 
-      {/* Centered mobile device frame (keeps the app looking like a phone on web) */}
-      <View style={styles.mobileDeviceContainer}>
+      {/* Phone frame is only for the web preview. On a real device the app
+          must always fill the whole screen. */}
+      <View style={isWeb ? styles.mobileDeviceContainer : styles.nativeContainer}>
         {currentScreen === 'welcome' && (
           <WelcomeScreen
             onStartChat={() => setCurrentScreen('onboarding')}
@@ -170,7 +199,12 @@ export default function App() {
 
         {/* Bottom navigation */}
         {AUTHED_SCREENS.includes(currentScreen) && (
-          <SafeAreaView style={styles.bottomNavContainer}>
+          <SafeAreaView
+            style={[
+              styles.bottomNavContainer,
+              Platform.OS === 'android' && { paddingBottom: insets.bottom },
+            ]}
+          >
             <View style={styles.bottomNav}>
               <TouchableOpacity
                 style={[styles.navItem, currentScreen === 'home' && styles.navItemActive]}
@@ -317,6 +351,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 24,
     elevation: 8,
+  },
+  nativeContainer: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#FDF9F3',
   },
   bottomNavContainer: {
     backgroundColor: 'rgba(253, 249, 243, 0.96)',

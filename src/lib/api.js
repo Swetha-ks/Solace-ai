@@ -51,7 +51,9 @@ export async function setToken(token) {
   else await AsyncStorage.removeItem(TOKEN_KEY);
 }
 
-async function request(path, { method = 'GET', body, auth = true } = {}) {
+const REQUEST_TIMEOUT = 60000;
+
+async function request(path, { method = 'GET', body, auth = true, timeout = REQUEST_TIMEOUT } = {}) {
   const headers = { 'Content-Type': 'application/json' };
 
   if (auth) {
@@ -60,18 +62,27 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   }
 
   let response;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeout) : null;
+
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller?.signal,
     });
-  } catch {
-    const error = new Error(
-      `Can't reach Solace's server at ${API_BASE_URL}. Is it running?`
+  } catch (error) {
+    const aborted = error?.name === 'AbortError';
+    const wrapped = new Error(
+      aborted
+        ? "Solace's server is taking a while to wake up. Try once more in a moment."
+        : `Can't reach Solace's server at ${API_BASE_URL}. Check your connection and try again.`
     );
-    error.offline = true;
-    throw error;
+    wrapped.offline = true;
+    throw wrapped;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 
   const text = await response.text();

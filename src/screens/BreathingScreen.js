@@ -5,8 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import {
@@ -90,7 +90,7 @@ export default function BreathingScreen({ onBack }) {
       <View pointerEvents="none" style={[styles.orb, styles.orbTop]} />
       <View pointerEvents="none" style={[styles.orb, styles.orbBottom]} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.frame}>
           {/* Quiet top bar */}
           <View style={styles.topBar}>
