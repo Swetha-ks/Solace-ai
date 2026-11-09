@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.solaceai.app",
-      "versionCode": 5,
+      "versionCode": 6,
       "permissions": [
         "SCHEDULE_EXACT_ALARM",
         "android.permission.RECORD_AUDIO"

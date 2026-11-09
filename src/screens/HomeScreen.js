@@ -152,14 +152,23 @@ const HABIT_SUGGESTIONS = [
   'Put my phone down for ten minutes',
 ];
 
-const TINY_RITUALS = [
-  { title: 'Open a window and take three slow breaths.', sub: 'Let the room change with you.' },
-  { title: 'Put your phone face down for two minutes.', sub: 'The world can wait that long.' },
-  { title: 'Name one thing you are glad is over.', sub: 'You survived it.' },
-  { title: 'Roll your shoulders back, gently.', sub: 'Unclench what you have been holding.' },
-  { title: 'Drink a glass of water slowly.', sub: 'Care, in its smallest form.' },
-  { title: 'Write one thing you want to leave behind today.', sub: 'Then let the page keep it.' },
-  { title: 'Step outside, even for a minute.', sub: 'A little light on your face.' },
+const GARDEN_STAGES = [
+  { icon: 'circle', color: 'rgba(176, 102, 74, 0.38)' },
+  { icon: 'sprout', color: '#6F8F6B' },
+  { icon: 'leaf', color: '#4F7C6B' },
+  { icon: 'flower', color: '#8C5AA8' },
+];
+
+const GARDEN_PREVIEW = [
+  { icon: 'sprout', color: '#6F8F6B' },
+  { icon: 'flower', color: '#8C5AA8' },
+  { icon: 'leaf', color: '#4F7C6B' },
+  { icon: 'leaf', color: '#6F8F6B' },
+  { icon: 'sprout', color: '#4F7C6B' },
+  { icon: 'flower', color: '#B0664A' },
+  { icon: 'flower', color: '#8C5AA8' },
+  { icon: 'leaf', color: '#4F7C6B' },
+  { icon: 'sprout', color: '#6F8F6B' },
 ];
 
 const WIND_DOWN_STEPS = [
@@ -262,7 +271,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const serifItalic = fontsLoaded
     ? 'Fraunces_600SemiBold_Italic'
     : 'Georgia, "Times New Roman", serif';
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   const [selectedMood, setSelectedMood] = useState(null);
   const [streak, setStreak] = useState(0);
@@ -274,7 +283,8 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const [habitsDone, setHabitsDone] = useState([]);
   const [customHabits, setCustomHabits] = useState([]);
   const [habitDraft, setHabitDraft] = useState('');
-  const [ritualDone, setRitualDone] = useState(false);
+  const [gameOpen, setGameOpen] = useState(false);
+  const [garden, setGarden] = useState(Array(9).fill(0));
 
   // Private journal, gratitude, wind-down and grounding all keep their own state.
   const [journalOpen, setJournalOpen] = useState(false);
@@ -295,7 +305,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const [groundStep, setGroundStep] = useState(0);
 
   const reveal = useRef(new Animated.Value(0)).current;
-  const presencePulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(reveal, {
@@ -304,27 +313,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, []);
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(presencePulse, {
-          toValue: 1,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(presencePulse, {
-          toValue: 0,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
   }, []);
 
   const rise = {
@@ -342,12 +330,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
 
   const loadSavedData = async () => {
     try {
-      const savedMood = await AsyncStorage.getItem('@solace_today_mood');
-      const savedMoodDate = await AsyncStorage.getItem('@solace_mood_date');
-      if (savedMood && savedMoodDate === todayKey()) setSelectedMood(savedMood);
-    } catch (e) {}
-
-    try {
       const rawHabits = await AsyncStorage.getItem('@solace_habits');
       if (rawHabits) {
         const saved = JSON.parse(rawHabits);
@@ -360,14 +342,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
       if (rawCustomHabits) {
         const saved = JSON.parse(rawCustomHabits);
         setCustomHabits(Array.isArray(saved) ? saved : []);
-      }
-    } catch (e) {}
-
-    try {
-      const rawRitual = await AsyncStorage.getItem('@solace_ritual');
-      if (rawRitual) {
-        const saved = JSON.parse(rawRitual);
-        setRitualDone(saved.date === todayKey() ? Boolean(saved.done) : false);
       }
     } catch (e) {}
 
@@ -410,11 +384,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
         if (savedStreak) setStreak(parseInt(savedStreak, 10));
       } catch (err) {}
     }
-
-    try {
-      const today = await moodsApi.today();
-      if (today.mood?.mood) setSelectedMood(today.mood.mood);
-    } catch (e) {}
   };
 
   const handleSelectMood = async (moodId) => {
@@ -506,25 +475,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
     });
   };
 
-  const toggleRitual = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
-    setRitualDone((prev) => {
-      const next = !prev;
-      AsyncStorage.setItem(
-        '@solace_ritual',
-        JSON.stringify({ date: todayKey(), done: next })
-      ).catch(() => {});
-      return next;
-    });
-  };
-
   const allHabits = [...HABITS, ...customHabits];
   const keptHabits = allHabits.filter((h) => habitsDone.includes(h.id)).length;
   const activeMood = MOODS.find((m) => m.id === selectedMood) || null;
   const dailyQuestion = DAILY_QUESTIONS[new Date().getDate() % DAILY_QUESTIONS.length];
-  const dailyRitual = TINY_RITUALS[new Date().getDate() % TINY_RITUALS.length];
   const habitSuggestions = HABIT_SUGGESTIONS.filter(
     (suggestion) =>
       !allHabits.some((habit) => habit.title.toLowerCase() === suggestion.toLowerCase()) &&
@@ -533,6 +487,22 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   ).slice(0, 3);
   const keptWindDown = WIND_DOWN_STEPS.filter((s) => windDownDone.includes(s.id)).length;
   const todayJournalEntry = journalEntries.find((entry) => entry.date === todayKey());
+
+  const gardenBlooms = garden.filter((stage) => stage === 3).length;
+  const gardenGrowing = garden.filter((stage) => stage > 0).length;
+
+  const growGarden = (index) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    setGarden((prev) =>
+      prev.map((stage, i) => (i === index ? Math.min(stage + 1, 3) : stage))
+    );
+  };
+
+  const resetGarden = () => {
+    setGarden(Array(9).fill(0));
+  };
 
   const openJournal = (prompt = '') => {
     setJournalPrompt(prompt);
@@ -615,9 +585,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const now = new Date();
   const week = buildWeek(weekMoods);
   const moodAccent = (id) => MOODS.find((m) => m.id === id)?.accent || 'rgba(42, 32, 51, 0.14)';
-  const dateLine = now
-    .toLocaleDateString(language, { weekday: 'short', day: 'numeric', month: 'short' })
-    .toUpperCase();
   const greetingKey =
     now.getHours() < 5
       ? 'greetingAwake'
@@ -629,19 +596,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
 
   const firstName = String(user?.name || '').trim().split(' ')[0];
   const hourNow = now.getHours();
-  const letterBody = activeMood
-    ? `You told me today feels ${activeMood.label.toLowerCase()}. Thank you for saying it out loud. I am not going anywhere - we can take the next minute slowly.`
-    : hourNow < 5
-    ? 'It is late, and you are still awake. Whatever is keeping you up, you can set a little of it down here.'
-    : hourNow < 12
-    ? 'Before the day asks anything of you, stay here a minute. You do not have to be ready for it all at once.'
-    : hourNow < 17
-    ? 'You have already done more today than you give yourself credit for. How are you, really?'
-    : 'The day is loosening its grip now. You do not have to make sense of all of it tonight.';
-  const letterMarginNote =
-    streak > 1
-      ? `Day ${streak}. You keep showing up, and that is not a small thing.`
-      : 'However today went, you do not have to hold it alone.';
 
   return (
     <View style={styles.root}>
@@ -685,101 +639,106 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
               </TouchableOpacity>
             </View>
 
-            {/* A letter from Solace */}
-            <Animated.View style={[styles.letterWrap, rise]}>
+            {/* Companion hero */}
+            <Animated.View style={[styles.heroCardWrap, rise]}>
               <LinearGradient
-                colors={['#FFFDF8', '#FBF2E9', '#F6EDF6']}
+                colors={['#FFF6EC', '#FAE5D8', '#F2E5F7']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.letterCard}
+                style={styles.heroCard}
               >
-                <View pointerEvents="none" style={styles.letterGlow} />
-                <View pointerEvents="none" style={styles.letterRuleLine} />
+                <View pointerEvents="none" style={styles.heroGlowA} />
+                <View pointerEvents="none" style={styles.heroGlowB} />
 
-                <View style={styles.letterTopRow}>
-                  <View style={styles.presencePill}>
-                    <Animated.View
-                      style={[
-                        styles.presenceDot,
-                        {
-                          opacity: presencePulse.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.4, 1],
-                          }),
-                          transform: [
-                            {
-                              scale: presencePulse.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [1, 1.45],
-                              }),
-                            },
-                          ],
-                        },
-                      ]}
+                <View style={styles.heroTopRow}>
+                  <View style={styles.heroAvatarWrap}>
+                    <View style={styles.heroAvatarHalo} />
+                    <Image
+                      source={require('../../assets/hug.png')}
+                      style={styles.heroAvatar}
+                      resizeMode="cover"
                     />
-                    <Text style={styles.presenceText}>SOLACE · HERE WITH YOU</Text>
+                    <View style={styles.heroLiveDot} />
                   </View>
-                  <Text style={styles.letterDate}>{dateLine}</Text>
+
+                  <View style={styles.heroTopText}>
+                    <Text style={styles.heroBrand}>SOLACE</Text>
+                    <Text style={styles.heroLive}>here with you, right now</Text>
+                  </View>
+
+                  <View style={styles.heroMomentChip}>
+                    <AppIcon
+                      name={hourNow < 17 && hourNow >= 5 ? 'sun' : 'moon'}
+                      size={12}
+                      color={TERRACOTTA}
+                      strokeWidth={1.7}
+                    />
+                    <Text style={styles.heroMomentText}>
+                      {hourNow < 5
+                        ? 'late'
+                        : hourNow < 12
+                        ? 'morning'
+                        : hourNow < 17
+                        ? 'afternoon'
+                        : 'evening'}
+                    </Text>
+                  </View>
                 </View>
 
-                <Text style={[styles.letterDear, { fontFamily: serif }]}>
+                <Text style={[styles.heroGreeting, { fontFamily: serif }]}>
                   {t(greetingKey)}
                   {firstName ? `, ${firstName}` : ''}.
                 </Text>
-
-                <Text style={[styles.letterBody, { fontFamily: serifItalic }]}>
-                  {letterBody}
+                <Text style={[styles.heroSub, { fontFamily: serifItalic }]}>
+                  {t('homeSub')}
                 </Text>
 
-                <Text style={styles.letterMarginNote}>{letterMarginNote}</Text>
-
-                <View style={styles.letterSignRow}>
-                  <View style={styles.letterSign}>
-                    <Text style={[styles.letterSignName, { fontFamily: serifItalic }]}>
-                      — Solace
+                <View style={styles.heroChips}>
+                  <View style={styles.heroChip}>
+                    <AppIcon name="streak" size={12} color={TERRACOTTA} strokeWidth={1.7} />
+                    <Text style={styles.heroChipText}>
+                      {streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : 'Day one'}
                     </Text>
-                    <Text style={styles.letterSignNote}>{t('noteSub')}</Text>
                   </View>
-
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={() => setIsVoiceModalOpen(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Speak with Solace"
-                  >
-                    <Image
-                      source={require('../../assets/hug.png')}
-                      style={styles.letterMascot}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
+                  <View style={styles.heroChip}>
+                    <AppIcon name="sprout" size={12} color={LILAC} strokeWidth={1.7} />
+                    <Text style={styles.heroChipText}>
+                      {keptHabits > 0 ? `${keptHabits} kept` : 'No habits yet'}
+                    </Text>
+                  </View>
+                  <View style={styles.heroChip}>
+                    <AppIcon name="pen" size={12} color={SAGE} strokeWidth={1.7} />
+                    <Text style={styles.heroChipText}>
+                      {journalEntries.length > 0
+                        ? `${journalEntries.length} lines`
+                        : 'Blank page'}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.letterActions}>
+                <View style={styles.heroActions}>
                   <TouchableOpacity
                     activeOpacity={0.9}
-                    style={styles.letterPrimary}
+                    style={styles.heroPrimary}
                     onPress={onOpenChat}
                     accessibilityRole="button"
                     accessibilityLabel="Talk with Solace"
                   >
-                    <Text style={[styles.letterPrimaryText, { fontFamily: serif }]}>
+                    <AppIcon name="chat" size={16} color={CREAM} strokeWidth={1.8} />
+                    <Text style={[styles.heroPrimaryText, { fontFamily: serif }]}>
                       Talk with me
                     </Text>
-                    <View style={styles.letterPrimaryCircle}>
-                      <AppIcon name="arrowRight" size={13} color={CREAM} strokeWidth={1.9} />
-                    </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     activeOpacity={0.85}
-                    style={styles.letterGhost}
+                    style={styles.heroSpeak}
                     onPress={() => setIsVoiceModalOpen(true)}
                     accessibilityRole="button"
                     accessibilityLabel="Speak instead of typing"
                   >
-                    <AppIcon name="mic" size={14} color={TERRACOTTA} strokeWidth={1.7} />
-                    <Text style={styles.letterGhostText}>Speak</Text>
+                    <AppIcon name="mic" size={15} color={TERRACOTTA} strokeWidth={1.7} />
+                    <Text style={styles.heroSpeakText}>Speak</Text>
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
@@ -979,42 +938,69 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
               </LinearGradient>
             </Animated.View>
 
-            {/* A tiny ritual for today */}
-            <Animated.View style={[styles.ritualWrap, rise]}>
-              <View style={styles.ritualCard}>
-                <View style={styles.ritualTopRow}>
-                  <View style={styles.ritualBadge}>
-                    <AppIcon name="sun" size={11} color={TERRACOTTA} strokeWidth={1.7} />
-                    <Text style={styles.ritualEyebrow}>{t('ritualEyebrow')}</Text>
-                  </View>
-                  <Text style={styles.ritualAside}>FROM ME TO YOU</Text>
-                </View>
-
-                <Text style={[styles.ritualText, { fontFamily: serifItalic }]}>
-                  {dailyRitual.title}
-                </Text>
-                <Text style={styles.ritualSub}>{dailyRitual.sub}</Text>
-
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  style={[styles.ritualBtn, ritualDone && styles.ritualBtnDone]}
-                  onPress={toggleRitual}
-                  accessibilityRole="button"
-                  accessibilityState={{ checked: ritualDone }}
-                  accessibilityLabel={ritualDone ? t('ritualDone') : t('ritualMark')}
-                >
-                  <View style={[styles.ritualTick, ritualDone && styles.ritualTickDone]}>
-                    {ritualDone ? (
-                      <AppIcon name="check" size={11} color={CREAM} strokeWidth={2.4} />
-                    ) : null}
-                  </View>
-                  <Text
-                    style={[styles.ritualBtnText, ritualDone && styles.ritualBtnTextDone]}
-                  >
-                    {ritualDone ? t('ritualDone') : t('ritualMark')}
+            {/* A minute to play */}
+            <Animated.View style={[styles.section, rise]}>
+              <View style={styles.sectionHead}>
+                <View>
+                  <Text style={[styles.sectionTitle, { fontFamily: serif }]}>
+                    A minute to play
                   </Text>
-                </TouchableOpacity>
+                  <Text style={styles.sectionSub}>
+                    No score. No timer. Just a small patch of calm.
+                  </Text>
+                </View>
+                <Text style={styles.sectionAside}>JUST FOR FUN</Text>
               </View>
+
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => setGameOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Grow a little garden game"
+              >
+                <LinearGradient
+                  colors={['#F2F9EC', '#E2F0D7', '#F3EBF9']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.gameCard}
+                >
+                  <View pointerEvents="none" style={styles.gameCardGlow} />
+
+                  <View style={styles.gameCardText}>
+                    <Text style={styles.gameCardEyebrow}>A QUIET GAME</Text>
+                    <Text style={[styles.gameCardTitle, { fontFamily: serif }]}>
+                      Grow a little garden
+                    </Text>
+                    <Text style={styles.gameCardSub}>
+                      Tap the soil and watch it bloom. Nothing here can be lost.
+                    </Text>
+
+                    <View style={styles.gameCardCta}>
+                      <Text style={styles.gameCardCtaText}>
+                        {gardenBlooms > 0 ? 'Back to your garden' : 'Play a minute'}
+                      </Text>
+                      <AppIcon name="arrowRight" size={13} color={CREAM} strokeWidth={1.9} />
+                    </View>
+                  </View>
+
+                  <View style={styles.gamePreview}>
+                    {garden.map((stage, index) => {
+                      const preview =
+                        stage > 0 ? GARDEN_STAGES[stage] : GARDEN_PREVIEW[index];
+                      return (
+                        <View key={index} style={styles.gamePreviewTile}>
+                          <AppIcon
+                            name={preview.icon}
+                            size={15}
+                            color={preview.color}
+                            strokeWidth={1.6}
+                          />
+                        </View>
+                      );
+                    })}
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
             </Animated.View>
 
             {/* Mindful moments */}
@@ -1818,6 +1804,102 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
             </View>
           </View>
         </Modal>
+
+        {/* A quiet game */}
+        <Modal
+          visible={gameOpen}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setGameOpen(false)}
+        >
+          <View style={styles.habitsOverlay}>
+            <View style={styles.habitsSheet}>
+              <LinearGradient
+                colors={['#F4F9F1', '#E8F1E4', '#F4EEF9']}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.grabber} />
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.habitsScroll}
+              >
+                <View style={styles.habitsHeader}>
+                  <View style={{ flex: 1, paddingRight: 12 }}>
+                    <Text style={styles.habitsEyebrow}>A QUIET GAME</Text>
+                    <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                      Grow a little garden
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.habitsCloseBtn}
+                    onPress={() => setGameOpen(false)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close the garden"
+                  >
+                    <AppIcon name="close" size={15} color={SOFT} strokeWidth={1.8} />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.habitsSub}>
+                  Tap a patch of soil and watch it grow. There is no score, no timer, and
+                  nothing here can be lost.
+                </Text>
+
+                <View style={styles.gardenGrid}>
+                  {garden.map((stage, index) => {
+                    const meta = GARDEN_STAGES[stage];
+                    return (
+                      <TouchableOpacity
+                        key={index}
+                        activeOpacity={0.8}
+                        style={styles.gardenTile}
+                        onPress={() => growGarden(index)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Garden patch ${index + 1}`}
+                      >
+                        <AppIcon
+                          name={meta.icon}
+                          size={stage === 0 ? 12 : 28}
+                          color={meta.color}
+                          strokeWidth={1.5}
+                        />
+                        {stage === 0 ? (
+                          <Text style={styles.gardenTapHint}>tap</Text>
+                        ) : null}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <View style={styles.gardenFootRow}>
+                  <Text style={styles.gardenProgress}>
+                    {gardenBlooms > 0
+                      ? `${gardenBlooms} of 9 in bloom`
+                      : gardenGrowing > 0
+                      ? `${gardenGrowing} of 9 growing`
+                      : 'Nothing planted yet'}
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.gardenReset}
+                    onPress={resetGarden}
+                    accessibilityRole="button"
+                    accessibilityLabel="Start the garden again"
+                  >
+                    <Text style={styles.gardenResetText}>Start again</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+                  {gardenBlooms === 9
+                    ? 'Every patch is in bloom. You did that, gently.'
+                    : 'Stay as long as you like. The garden keeps waiting.'}
+                </Text>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -1941,6 +2023,272 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
 
+  // Companion hero
+  heroCardWrap: {
+    marginTop: 20,
+    marginBottom: 6,
+    borderRadius: 30,
+    shadowColor: '#B0664A',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.14,
+    shadowRadius: 28,
+    elevation: 5,
+  },
+  heroCard: {
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.92)',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    overflow: 'hidden',
+  },
+  heroGlowA: {
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    top: -120,
+    right: -70,
+    backgroundColor: 'rgba(233, 185, 160, 0.34)',
+  },
+  heroGlowB: {
+    position: 'absolute',
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    bottom: -110,
+    left: -70,
+    backgroundColor: 'rgba(196, 167, 232, 0.20)',
+  },
+  heroTopRow: { flexDirection: 'row', alignItems: 'center' },
+  heroAvatarWrap: {
+    width: 54,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+  },
+  heroAvatarHalo: {
+    position: 'absolute',
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+  },
+  heroAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#F7EEE4',
+  },
+  heroLiveDot: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    right: 0,
+    bottom: 1,
+    backgroundColor: SAGE,
+    borderWidth: 2,
+    borderColor: '#FFF7EF',
+  },
+  heroTopText: { flex: 1, minWidth: 0 },
+  heroBrand: {
+    fontSize: 9.5,
+    letterSpacing: 3.4,
+    fontWeight: '700',
+    color: 'rgba(42, 32, 51, 0.6)',
+  },
+  heroLive: {
+    fontSize: 10.5,
+    color: 'rgba(42, 32, 51, 0.44)',
+    marginTop: 3,
+    letterSpacing: 0.2,
+  },
+  heroMomentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.75)',
+  },
+  heroMomentText: {
+    fontSize: 8.5,
+    letterSpacing: 1,
+    fontWeight: '700',
+    color: TERRACOTTA,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+  },
+  heroGreeting: {
+    fontSize: 30,
+    lineHeight: 36,
+    letterSpacing: -0.6,
+    color: INK,
+    marginTop: 18,
+  },
+  heroSub: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: MUTED,
+    marginTop: 8,
+    maxWidth: 300,
+    letterSpacing: 0.1,
+  },
+  heroChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 14,
+  },
+  heroChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    marginRight: 7,
+    marginBottom: 7,
+  },
+  heroChipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: 'rgba(42, 32, 51, 0.62)',
+    marginLeft: 5,
+    letterSpacing: 0.1,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 13,
+  },
+  heroPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: TERRACOTTA,
+    paddingLeft: 18,
+    paddingRight: 20,
+    height: 48,
+    borderRadius: 999,
+    shadowColor: TERRACOTTA,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+  heroPrimaryText: {
+    color: CREAM,
+    fontSize: 15,
+    letterSpacing: 0.1,
+    marginLeft: 8,
+  },
+  heroSpeak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+    paddingHorizontal: 16,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 102, 74, 0.22)',
+  },
+  heroSpeakText: {
+    marginLeft: 6,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: TERRACOTTA,
+    letterSpacing: 0.2,
+  },
+
+  // Garden game card
+  gameCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    overflow: 'hidden',
+    shadowColor: '#6F8F6B',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 3,
+  },
+  gameCardGlow: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    top: -110,
+    right: -60,
+    backgroundColor: 'rgba(140, 90, 168, 0.14)',
+  },
+  gameCardText: { flex: 1, paddingRight: 10 },
+  gameCardEyebrow: {
+    fontSize: 8.5,
+    letterSpacing: 1.8,
+    fontWeight: '700',
+    color: SAGE,
+    marginBottom: 6,
+  },
+  gameCardTitle: {
+    fontSize: 22,
+    lineHeight: 27,
+    letterSpacing: -0.4,
+    color: INK,
+  },
+  gameCardSub: {
+    fontSize: 11.5,
+    lineHeight: 17,
+    color: MUTED,
+    marginTop: 6,
+  },
+  gameCardCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#4F7C6B',
+    paddingLeft: 14,
+    paddingRight: 12,
+    height: 36,
+    borderRadius: 999,
+    marginTop: 12,
+  },
+  gameCardCtaText: {
+    color: CREAM,
+    fontSize: 11.5,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    marginRight: 8,
+  },
+  gamePreview: {
+    width: 96,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gamePreviewTile: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    marginBottom: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
+
   // Hero
   hero: { marginTop: 26, marginBottom: 20 },
   eyebrow: {
@@ -1969,179 +2317,6 @@ const styles = StyleSheet.create({
     color: MUTED,
     maxWidth: 300,
     letterSpacing: 0.1,
-  },
-
-  // Letter from Solace
-  letterWrap: {
-    marginTop: 22,
-    borderRadius: 30,
-    shadowColor: '#B0664A',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.12,
-    shadowRadius: 30,
-    elevation: 5,
-  },
-  letterCard: {
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    overflow: 'hidden',
-  },
-  letterGlow: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    top: -120,
-    right: -80,
-    backgroundColor: 'rgba(233, 185, 160, 0.28)',
-  },
-  letterRuleLine: {
-    position: 'absolute',
-    left: 20,
-    right: 20,
-    top: 96,
-    height: 1,
-    backgroundColor: 'rgba(42, 32, 51, 0.06)',
-  },
-  letterTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  presencePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: 'rgba(111, 143, 107, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(111, 143, 107, 0.22)',
-    flexShrink: 1,
-  },
-  presenceDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: SAGE,
-    marginRight: 6,
-  },
-  presenceText: {
-    fontSize: 8,
-    letterSpacing: 1.3,
-    fontWeight: '700',
-    color: 'rgba(79, 124, 107, 0.95)',
-    flexShrink: 1,
-  },
-  letterDate: {
-    fontSize: 8,
-    letterSpacing: 1.2,
-    fontWeight: '700',
-    color: 'rgba(42, 32, 51, 0.32)',
-    marginLeft: 8,
-  },
-  letterDear: {
-    fontSize: 27,
-    lineHeight: 33,
-    letterSpacing: -0.5,
-    color: INK,
-    marginTop: 18,
-  },
-  letterBody: {
-    fontSize: 16.5,
-    lineHeight: 26,
-    letterSpacing: -0.1,
-    color: 'rgba(42, 32, 51, 0.8)',
-    marginTop: 10,
-  },
-  letterMarginNote: {
-    marginTop: 12,
-    fontSize: 11,
-    lineHeight: 17,
-    color: SOFT,
-    letterSpacing: 0.2,
-    fontStyle: 'italic',
-  },
-  letterSignRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  letterSign: { flex: 1, paddingRight: 12 },
-  letterSignName: {
-    fontSize: 16,
-    color: TERRACOTTA,
-    letterSpacing: -0.2,
-  },
-  letterSignNote: {
-    fontSize: 10.5,
-    color: SOFT,
-    letterSpacing: 0.2,
-    marginTop: 2,
-  },
-  letterMascot: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    backgroundColor: '#F7EEE4',
-  },
-  letterActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 18,
-  },
-  letterPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: TERRACOTTA,
-    paddingLeft: 20,
-    paddingRight: 6,
-    paddingVertical: 6,
-    borderRadius: 999,
-    minHeight: 48,
-    shadowColor: TERRACOTTA,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
-    elevation: 2,
-  },
-  letterPrimaryText: {
-    color: CREAM,
-    fontSize: 15.5,
-    letterSpacing: 0.1,
-    marginRight: 13,
-  },
-  letterPrimaryCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(253, 249, 243, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  letterGhost: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
-    paddingHorizontal: 14,
-    height: 44,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(176, 102, 74, 0.22)',
-  },
-  letterGhostText: {
-    marginLeft: 6,
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: TERRACOTTA,
-    letterSpacing: 0.2,
   },
 
   // Companion note
@@ -2794,6 +2969,59 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
 
+  // Little garden game
+  gardenGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 18,
+  },
+  gardenTile: {
+    width: '31.5%',
+    aspectRatio: 1,
+    borderRadius: 22,
+    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 253, 248, 0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+  },
+  gardenTapHint: {
+    marginTop: 5,
+    fontSize: 8.5,
+    letterSpacing: 1.2,
+    fontWeight: '700',
+    color: 'rgba(176, 102, 74, 0.42)',
+    textTransform: 'uppercase',
+  },
+  gardenFootRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  gardenProgress: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: SAGE,
+    letterSpacing: 0.4,
+  },
+  gardenReset: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderWidth: 1,
+    borderColor: 'rgba(111, 143, 107, 0.2)',
+  },
+  gardenResetText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#4F7C6B',
+    letterSpacing: 0.2,
+  },
+
   // Daily question
   questionWrap: {
     marginTop: 26,
@@ -2879,99 +3107,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  // Tiny ritual card
-  ritualWrap: {
-    marginTop: 14,
-    borderRadius: 26,
-    shadowColor: '#B0664A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.10,
-    shadowRadius: 22,
-    elevation: 3,
-  },
-  ritualCard: {
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    backgroundColor: 'rgba(255, 250, 244, 0.92)',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    overflow: 'hidden',
-  },
-  ritualTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  ritualBadge: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
-  ritualEyebrow: {
-    fontSize: 8,
-    letterSpacing: 1.7,
-    fontWeight: '700',
-    color: TERRACOTTA,
-    marginLeft: 6,
-    flexShrink: 1,
-  },
-  ritualAside: {
-    fontSize: 8,
-    letterSpacing: 1.3,
-    fontWeight: '700',
-    color: 'rgba(42, 32, 51, 0.30)',
-    marginLeft: 8,
-  },
-  ritualText: {
-    fontSize: 18,
-    lineHeight: 25,
-    color: INK,
-    letterSpacing: -0.2,
-  },
-  ritualSub: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: MUTED,
-    marginTop: 6,
-  },
-  ritualBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginTop: 14,
-    paddingLeft: 6,
-    paddingRight: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(176, 102, 74, 0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(176, 102, 74, 0.20)',
-    minHeight: 40,
-  },
-  ritualBtnDone: {
-    backgroundColor: 'rgba(111, 143, 107, 0.14)',
-    borderColor: 'rgba(111, 143, 107, 0.28)',
-  },
-  ritualTick: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1.4,
-    borderColor: 'rgba(176, 102, 74, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 9,
-  },
-  ritualTickDone: {
-    backgroundColor: SAGE,
-    borderColor: SAGE,
-  },
-  ritualBtnText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: TERRACOTTA,
-    letterSpacing: 0.1,
-  },
-  ritualBtnTextDone: { color: SAGE },
 
   // Journal and gratitude sheets
   journalPrompt: {
