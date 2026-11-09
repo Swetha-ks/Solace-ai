@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
   Animated,
   Easing,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -400,11 +400,11 @@ export default function OnboardingScreen({ onComplete, onSkip }) {
 
   return (
     <View style={styles.root}>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
         <View
           style={styles.body}
           onLayout={(event) => {
-            const nextWidth = Math.min(event.nativeEvent.layout.width, 430);
+            const nextWidth = event.nativeEvent.layout.width;
             if (nextWidth && Math.abs(nextWidth - pageWidth) > 1) setPageWidth(nextWidth);
           }}
         >
@@ -476,7 +476,7 @@ export default function OnboardingScreen({ onComplete, onSkip }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: CREAM },
   safe: { flex: 1, alignItems: 'center' },
-  body: { flex: 1, width: '100%', maxWidth: 430 },
+  body: { flex: 1, width: '100%' },
 
   // Fixed header
   topBar: {

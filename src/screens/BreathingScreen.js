@@ -211,7 +211,7 @@ export default function BreathingScreen({ onBack }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: CREAM },
   safeArea: { flex: 1, alignItems: 'center' },
-  frame: { width: '100%', maxWidth: 440, flex: 1, paddingHorizontal: 24 },
+  frame: { width: '100%', flex: 1, paddingHorizontal: 24 },
 
   orb: { position: 'absolute', borderRadius: 999 },
   orbTop: {

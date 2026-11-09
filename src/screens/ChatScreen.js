@@ -28,6 +28,7 @@ import {
   conversationsApi,
   formatServerTime,
 } from '../lib/api';
+import { getLanguage } from '../lib/i18n';
 
 const INK = '#2A2033';
 const MUTED = 'rgba(42, 32, 51, 0.62)';
@@ -235,6 +236,7 @@ export default function ChatScreen({ onBack, onOpenBreathing }) {
         conversationId: conversationId ?? undefined,
         message: content,
         mood: userMood ?? undefined,
+        language: getLanguage(),
       });
 
       if (!mountedRef.current) return;
@@ -594,7 +596,7 @@ export default function ChatScreen({ onBack, onOpenBreathing }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: CREAM },
   safeArea: { flex: 1, alignItems: 'center' },
-  frame: { width: '100%', maxWidth: 440, flex: 1 },
+  frame: { width: '100%', flex: 1 },
 
   orb: { position: 'absolute', borderRadius: 999 },
   orbTop: {
@@ -883,7 +885,6 @@ const styles = StyleSheet.create({
   },
   historySheet: {
     width: '100%',
-    maxWidth: 440,
     maxHeight: '80%',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,

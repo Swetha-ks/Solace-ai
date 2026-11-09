@@ -24,6 +24,7 @@ import {
 import VoiceListeningModal from '../components/VoiceListeningModal';
 import AppIcon from '../components/AppIcon';
 import { ensureSession, insightsApi, moodsApi } from '../lib/api';
+import { useLanguage } from '../lib/i18n';
 
 const INK = '#2A2033';
 const MUTED = 'rgba(42, 32, 51, 0.62)';
@@ -141,6 +142,25 @@ const HABITS = [
   { id: 'line', title: 'Write one honest line', sub: 'No one else has to read it.' },
 ];
 
+const HABIT_SUGGESTIONS = [
+  'Stretch for a minute',
+  'Call someone I love',
+  'Sit in the sunlight',
+  'Tidy one small corner',
+  'Rest without guilt',
+  'Put my phone down for ten minutes',
+];
+
+const TINY_RITUALS = [
+  { title: 'Open a window and take three slow breaths.', sub: 'Let the room change with you.' },
+  { title: 'Put your phone face down for two minutes.', sub: 'The world can wait that long.' },
+  { title: 'Name one thing you are glad is over.', sub: 'You survived it.' },
+  { title: 'Roll your shoulders back, gently.', sub: 'Unclench what you have been holding.' },
+  { title: 'Drink a glass of water slowly.', sub: 'Care, in its smallest form.' },
+  { title: 'Write one thing you want to leave behind today.', sub: 'Then let the page keep it.' },
+  { title: 'Step outside, even for a minute.', sub: 'A little light on your face.' },
+];
+
 const WIND_DOWN_STEPS = [
   { id: 'lights', title: 'Lower the lights', sub: 'Let your eyes soften with the room.' },
   { id: 'phone', title: 'Put the phone out of reach', sub: 'Just for the next few minutes.' },
@@ -241,6 +261,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
   const serifItalic = fontsLoaded
     ? 'Fraunces_600SemiBold_Italic'
     : 'Georgia, "Times New Roman", serif';
+  const { t, language } = useLanguage();
 
   const [selectedMood, setSelectedMood] = useState(null);
   const [streak, setStreak] = useState(0);
@@ -250,6 +271,9 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [habitsOpen, setHabitsOpen] = useState(false);
   const [habitsDone, setHabitsDone] = useState([]);
+  const [customHabits, setCustomHabits] = useState([]);
+  const [habitDraft, setHabitDraft] = useState('');
+  const [ritualDone, setRitualDone] = useState(false);
 
   // Private journal, gratitude, wind-down and grounding all keep their own state.
   const [journalOpen, setJournalOpen] = useState(false);
@@ -305,6 +329,22 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
       if (rawHabits) {
         const saved = JSON.parse(rawHabits);
         setHabitsDone(saved.date === todayKey() ? saved.done || [] : []);
+      }
+    } catch (e) {}
+
+    try {
+      const rawCustomHabits = await AsyncStorage.getItem('@solace_custom_habits');
+      if (rawCustomHabits) {
+        const saved = JSON.parse(rawCustomHabits);
+        setCustomHabits(Array.isArray(saved) ? saved : []);
+      }
+    } catch (e) {}
+
+    try {
+      const rawRitual = await AsyncStorage.getItem('@solace_ritual');
+      if (rawRitual) {
+        const saved = JSON.parse(rawRitual);
+        setRitualDone(saved.date === todayKey() ? Boolean(saved.done) : false);
       }
     } catch (e) {}
 
@@ -398,9 +438,76 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
     });
   };
 
-  const keptHabits = HABITS.filter((h) => habitsDone.includes(h.id)).length;
+  const saveCustomHabits = (items) => {
+    AsyncStorage.setItem('@solace_custom_habits', JSON.stringify(items)).catch(() => {});
+  };
+
+  const addCustomHabit = (title) => {
+    const clean = String(title || '').trim();
+    if (!clean) return;
+
+    const exists = [...HABITS, ...customHabits].some(
+      (habit) => habit.title.toLowerCase() === clean.toLowerCase()
+    );
+    if (exists) {
+      setHabitDraft('');
+      return;
+    }
+
+    const habit = {
+      id: `custom-${Date.now()}`,
+      title: clean,
+      sub: 'Your own small promise.',
+      custom: true,
+    };
+    const next = [...customHabits, habit];
+    setCustomHabits(next);
+    saveCustomHabits(next);
+    setHabitDraft('');
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+  };
+
+  const removeCustomHabit = (habitId) => {
+    const next = customHabits.filter((habit) => habit.id !== habitId);
+    setCustomHabits(next);
+    saveCustomHabits(next);
+    setHabitsDone((prev) => {
+      const kept = prev.filter((id) => id !== habitId);
+      AsyncStorage.setItem(
+        '@solace_habits',
+        JSON.stringify({ date: todayKey(), done: kept })
+      ).catch(() => {});
+      return kept;
+    });
+  };
+
+  const toggleRitual = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    setRitualDone((prev) => {
+      const next = !prev;
+      AsyncStorage.setItem(
+        '@solace_ritual',
+        JSON.stringify({ date: todayKey(), done: next })
+      ).catch(() => {});
+      return next;
+    });
+  };
+
+  const allHabits = [...HABITS, ...customHabits];
+  const keptHabits = allHabits.filter((h) => habitsDone.includes(h.id)).length;
   const activeMood = MOODS.find((m) => m.id === selectedMood) || null;
   const dailyQuestion = DAILY_QUESTIONS[new Date().getDate() % DAILY_QUESTIONS.length];
+  const dailyRitual = TINY_RITUALS[new Date().getDate() % TINY_RITUALS.length];
+  const habitSuggestions = HABIT_SUGGESTIONS.filter(
+    (suggestion) =>
+      !allHabits.some((habit) => habit.title.toLowerCase() === suggestion.toLowerCase()) &&
+      (!habitDraft.trim() ||
+        suggestion.toLowerCase().includes(habitDraft.trim().toLowerCase()))
+  ).slice(0, 3);
   const keptWindDown = WIND_DOWN_STEPS.filter((s) => windDownDone.includes(s.id)).length;
   const todayJournalEntry = journalEntries.find((entry) => entry.date === todayKey());
 
@@ -486,8 +593,16 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
   const week = buildWeek(weekMoods);
   const moodAccent = (id) => MOODS.find((m) => m.id === id)?.accent || 'rgba(42, 32, 51, 0.14)';
   const dateLine = now
-    .toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+    .toLocaleDateString(language, { weekday: 'long', day: 'numeric', month: 'long' })
     .toUpperCase();
+  const greetingKey =
+    now.getHours() < 5
+      ? 'greetingAwake'
+      : now.getHours() < 12
+      ? 'greetingMorning'
+      : now.getHours() < 17
+      ? 'greetingAfternoon'
+      : 'greetingEvening';
 
   return (
     <View style={styles.root}>
@@ -510,7 +625,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
               <View style={styles.brandRow}>
                 <Text style={styles.wordmark}>SOLACE</Text>
                 <View style={styles.topRule} />
-                <Text style={styles.topNote}>a quiet place</Text>
+                <Text style={styles.topNote}>{t('quietPlace')}</Text>
               </View>
 
               <TouchableOpacity
@@ -535,12 +650,12 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
             <Animated.View style={[styles.hero, rise]}>
               <Text style={styles.eyebrow}>{dateLine}</Text>
               <Text style={[styles.title, { fontFamily: serif }]}>
-                {greetingForHour(now.getHours())},
+                {t(greetingKey)},
               </Text>
-              <Text style={[styles.titleAccent, { fontFamily: serifItalic }]}>friend.</Text>
-              <Text style={styles.subtitle}>
-                However today went, you don’t have to hold it on your own.
+              <Text style={[styles.titleAccent, { fontFamily: serifItalic }]}>
+                {t('homeFriend')}
               </Text>
+              <Text style={styles.subtitle}>{t('homeSub')}</Text>
             </Animated.View>
 
             {/* A note from Solace */}
@@ -549,13 +664,13 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
                 <CompanionLight size={48} onPress={() => setIsVoiceModalOpen(true)} />
                 <View style={styles.noteHeadText}>
                   <Text maxFontSizeMultiplier={1.2} style={styles.noteEyebrow}>
-                    A NOTE FROM SOLACE
+                    {t('noteEyebrow')}
                   </Text>
                   <Text
                     maxFontSizeMultiplier={1.2}
                     style={[styles.noteHeadSub, { fontFamily: serifItalic }]}
                   >
-                    no rush, no agenda
+                    {t('noteSub')}
                   </Text>
                 </View>
               </View>
@@ -571,12 +686,11 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
                   maxFontSizeMultiplier={1.15}
                   style={[styles.noteText, { fontFamily: serifItalic }]}
                 >
-                  I'm here, with no rush. Tell me what today felt like - or we can just
-                  sit in the quiet together.
+                  {t('noteText')}
                 </Text>
 
                 <View style={styles.noteActionRow}>
-                  <Text style={styles.noteAction}>Start a conversation</Text>
+                  <Text style={styles.noteAction}>{t('noteAction')}</Text>
                   <AppIcon name="arrowRight" size={14} color={TERRACOTTA} strokeWidth={1.8} />
                 </View>
               </TouchableOpacity>
@@ -778,6 +892,44 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
               </LinearGradient>
             </Animated.View>
 
+            {/* A tiny ritual for today */}
+            <Animated.View style={[styles.ritualWrap, rise]}>
+              <View style={styles.ritualCard}>
+                <View style={styles.ritualTopRow}>
+                  <View style={styles.ritualBadge}>
+                    <AppIcon name="sun" size={11} color={TERRACOTTA} strokeWidth={1.7} />
+                    <Text style={styles.ritualEyebrow}>{t('ritualEyebrow')}</Text>
+                  </View>
+                  <Text style={styles.ritualAside}>ONE SMALL THING</Text>
+                </View>
+
+                <Text style={[styles.ritualText, { fontFamily: serifItalic }]}>
+                  {dailyRitual.title}
+                </Text>
+                <Text style={styles.ritualSub}>{dailyRitual.sub}</Text>
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={[styles.ritualBtn, ritualDone && styles.ritualBtnDone]}
+                  onPress={toggleRitual}
+                  accessibilityRole="button"
+                  accessibilityState={{ checked: ritualDone }}
+                  accessibilityLabel={ritualDone ? t('ritualDone') : t('ritualMark')}
+                >
+                  <View style={[styles.ritualTick, ritualDone && styles.ritualTickDone]}>
+                    {ritualDone ? (
+                      <AppIcon name="check" size={11} color={CREAM} strokeWidth={2.4} />
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[styles.ritualBtnText, ritualDone && styles.ritualBtnTextDone]}
+                  >
+                    {ritualDone ? t('ritualDone') : t('ritualMark')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+
             {/* Mindful moments */}
             <Animated.View style={[styles.section, rise]}>
               <View style={styles.sectionHead}>
@@ -874,7 +1026,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
                     <Text style={styles.toolTileTitle}>Daily habits</Text>
                     <Text style={styles.toolTileSub}>
                       {keptHabits > 0
-                        ? `${keptHabits} of ${HABITS.length} kept`
+                        ? `${keptHabits} of ${allHabits.length} kept`
                         : 'Small steps that add up'}
                     </Text>
                     <View style={styles.toolTileCircle}>
@@ -1002,7 +1154,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
           animationType="slide"
           onRequestClose={() => setHabitsOpen(false)}
         >
-          <View style={styles.habitsOverlay}>
+          <KeyboardAvoidingView
+            style={styles.habitsOverlay}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
             <View style={styles.habitsSheet}>
               <LinearGradient
                 colors={['#FDF9F3', '#F8F0E8', '#F1E8F5']}
@@ -1010,73 +1165,147 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
               />
               <View style={styles.grabber} />
 
-              <View style={styles.habitsHeader}>
-                <View>
-                  <Text style={styles.habitsEyebrow}>A LITTLE EVERY DAY</Text>
-                  <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
-                    Gentle habits
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.habitsCloseBtn}
-                  onPress={() => setHabitsOpen(false)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close habits"
-                >
-                  <AppIcon name="close" size={15} color={SOFT} strokeWidth={1.8} />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.habitsSub}>
-                Tiny things, done kindly. Miss a day and nothing breaks.
-              </Text>
-
-              <View style={styles.habitsProgressRow}>
-                <Text style={styles.habitsProgressText}>
-                  {keptHabits} of {HABITS.length} kept today
-                </Text>
-                <View style={styles.habitsProgressTrack}>
-                  <View
-                    style={[
-                      styles.habitsProgressFill,
-                      { width: `${(keptHabits / HABITS.length) * 100}%` },
-                    ]}
-                  />
-                </View>
-              </View>
-
-              {HABITS.map((habit) => {
-                const isDone = habitsDone.includes(habit.id);
-                return (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.habitsScroll}
+              >
+                <View style={styles.habitsHeader}>
+                  <View>
+                    <Text style={styles.habitsEyebrow}>A LITTLE EVERY DAY</Text>
+                    <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                      Gentle habits
+                    </Text>
+                  </View>
                   <TouchableOpacity
-                    key={habit.id}
-                    activeOpacity={0.85}
-                    style={[styles.habitRow, isDone && styles.habitRowDone]}
-                    onPress={() => toggleHabit(habit.id)}
+                    style={styles.habitsCloseBtn}
+                    onPress={() => setHabitsOpen(false)}
                     accessibilityRole="button"
-                    accessibilityState={{ checked: isDone }}
-                    accessibilityLabel={habit.title}
+                    accessibilityLabel="Close habits"
                   >
-                    <View style={[styles.habitCheck, isDone && styles.habitCheckDone]}>
-                      {isDone ? (
-                        <AppIcon name="check" size={13} color={CREAM} strokeWidth={2.4} />
-                      ) : null}
-                    </View>
-                    <View style={styles.habitInfo}>
-                      <Text style={[styles.habitTitle, isDone && styles.habitTitleDone]}>
-                        {habit.title}
-                      </Text>
-                      <Text style={styles.habitSub}>{habit.sub}</Text>
-                    </View>
+                    <AppIcon name="close" size={15} color={SOFT} strokeWidth={1.8} />
                   </TouchableOpacity>
-                );
-              })}
+                </View>
 
-              <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
-                Come back tomorrow, gently.
-              </Text>
+                <Text style={styles.habitsSub}>
+                  Tiny things, done kindly. Miss a day and nothing breaks.
+                </Text>
+
+                <View style={styles.habitsProgressRow}>
+                  <Text style={styles.habitsProgressText}>
+                    {keptHabits} of {allHabits.length} kept today
+                  </Text>
+                  <View style={styles.habitsProgressTrack}>
+                    <View
+                      style={[
+                        styles.habitsProgressFill,
+                        {
+                          width: `${
+                            allHabits.length
+                              ? (keptHabits / allHabits.length) * 100
+                              : 0
+                          }%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                {allHabits.map((habit) => {
+                  const isDone = habitsDone.includes(habit.id);
+                  return (
+                    <TouchableOpacity
+                      key={habit.id}
+                      activeOpacity={0.85}
+                      style={[styles.habitRow, isDone && styles.habitRowDone]}
+                      onPress={() => toggleHabit(habit.id)}
+                      accessibilityRole="button"
+                      accessibilityState={{ checked: isDone }}
+                      accessibilityLabel={habit.title}
+                    >
+                      <View style={[styles.habitCheck, isDone && styles.habitCheckDone]}>
+                        {isDone ? (
+                          <AppIcon name="check" size={13} color={CREAM} strokeWidth={2.4} />
+                        ) : null}
+                      </View>
+                      <View style={styles.habitInfo}>
+                        <Text style={[styles.habitTitle, isDone && styles.habitTitleDone]}>
+                          {habit.title}
+                        </Text>
+                        <Text style={styles.habitSub}>{habit.sub}</Text>
+                      </View>
+                      {habit.custom ? (
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          style={styles.habitRemove}
+                          onPress={() => removeCustomHabit(habit.id)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Remove ${habit.title}`}
+                        >
+                          <AppIcon name="close" size={12} color={SOFT} strokeWidth={1.8} />
+                        </TouchableOpacity>
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                })}
+
+                <View style={styles.habitAddBlock}>
+                  <Text style={styles.habitAddLabel}>ADD YOUR OWN</Text>
+                  <View style={styles.habitInputRow}>
+                    <TextInput
+                      value={habitDraft}
+                      onChangeText={setHabitDraft}
+                      onSubmitEditing={() => addCustomHabit(habitDraft)}
+                      placeholder="Something small, just for you"
+                      placeholderTextColor="rgba(42, 32, 51, 0.34)"
+                      style={styles.habitInput}
+                      returnKeyType="done"
+                      maxLength={60}
+                    />
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      style={[
+                        styles.habitAddBtn,
+                        !habitDraft.trim() && styles.habitAddBtnIdle,
+                      ]}
+                      onPress={() => addCustomHabit(habitDraft)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Add habit"
+                    >
+                      <AppIcon
+                        name="plus"
+                        size={16}
+                        color={CREAM}
+                        strokeWidth={2}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {habitSuggestions.length > 0 ? (
+                    <View style={styles.habitChipRow}>
+                      {habitSuggestions.map((suggestion) => (
+                        <TouchableOpacity
+                          key={suggestion}
+                          activeOpacity={0.85}
+                          style={styles.habitChip}
+                          onPress={() => addCustomHabit(suggestion)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Add ${suggestion}`}
+                        >
+                          <AppIcon name="plus" size={10} color={TERRACOTTA} strokeWidth={2} />
+                          <Text style={styles.habitChipText}>{suggestion}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
+
+                <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+                  Come back tomorrow, gently.
+                </Text>
+              </ScrollView>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Gentle streak */}
@@ -1510,7 +1739,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: CREAM },
   safeArea: { flex: 1, alignItems: 'center' },
-  mobilePhoneFrame: { width: '100%', maxWidth: 430, flex: 1 },
+  mobilePhoneFrame: { width: '100%', flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingTop: 6, paddingBottom: 40 },
 
   orb: { position: 'absolute', borderRadius: 999 },
@@ -2118,12 +2347,12 @@ const styles = StyleSheet.create({
   },
   habitsSheet: {
     width: '100%',
-    maxWidth: 440,
+    maxHeight: '88%',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
     paddingTop: 10,
-    paddingBottom: 30,
+    paddingBottom: 22,
     overflow: 'hidden',
     shadowColor: '#B0664A',
     shadowOffset: { width: 0, height: -8 },
@@ -2131,6 +2360,7 @@ const styles = StyleSheet.create({
     shadowRadius: 26,
     elevation: 12,
   },
+  habitsScroll: { paddingBottom: 8 },
   grabber: {
     width: 38,
     height: 4,
@@ -2234,6 +2464,68 @@ const styles = StyleSheet.create({
   },
   habitTitleDone: { color: 'rgba(42, 32, 51, 0.55)' },
   habitSub: { fontSize: 11, color: SOFT, marginTop: 3, letterSpacing: 0.1 },
+  habitRemove: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(42, 32, 51, 0.05)',
+  },
+  habitAddBlock: { marginTop: 12 },
+  habitAddLabel: {
+    fontSize: 8.5,
+    letterSpacing: 2,
+    fontWeight: '700',
+    color: TERRACOTTA,
+    marginBottom: 8,
+  },
+  habitInputRow: { flexDirection: 'row', alignItems: 'center' },
+  habitInput: {
+    flex: 1,
+    height: 46,
+    borderRadius: 16,
+    paddingHorizontal: 15,
+    fontSize: 13,
+    color: INK,
+    backgroundColor: 'rgba(255, 253, 248, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  habitAddBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: TERRACOTTA,
+  },
+  habitAddBtnIdle: { opacity: 0.4 },
+  habitChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+  },
+  habitChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(176, 102, 74, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 102, 74, 0.16)',
+    marginRight: 7,
+    marginBottom: 7,
+  },
+  habitChipText: {
+    fontSize: 11,
+    color: 'rgba(42, 32, 51, 0.72)',
+    marginLeft: 5,
+    letterSpacing: 0.1,
+  },
   habitsFooter: {
     marginTop: 14,
     fontSize: 12.5,
@@ -2327,6 +2619,99 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  // Tiny ritual card
+  ritualWrap: {
+    marginTop: 14,
+    borderRadius: 26,
+    shadowColor: '#B0664A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.10,
+    shadowRadius: 22,
+    elevation: 3,
+  },
+  ritualCard: {
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 250, 244, 0.92)',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    overflow: 'hidden',
+  },
+  ritualTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  ritualBadge: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
+  ritualEyebrow: {
+    fontSize: 8,
+    letterSpacing: 1.7,
+    fontWeight: '700',
+    color: TERRACOTTA,
+    marginLeft: 6,
+    flexShrink: 1,
+  },
+  ritualAside: {
+    fontSize: 8,
+    letterSpacing: 1.3,
+    fontWeight: '700',
+    color: 'rgba(42, 32, 51, 0.30)',
+    marginLeft: 8,
+  },
+  ritualText: {
+    fontSize: 18,
+    lineHeight: 25,
+    color: INK,
+    letterSpacing: -0.2,
+  },
+  ritualSub: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: MUTED,
+    marginTop: 6,
+  },
+  ritualBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 14,
+    paddingLeft: 6,
+    paddingRight: 16,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(176, 102, 74, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 102, 74, 0.20)',
+    minHeight: 40,
+  },
+  ritualBtnDone: {
+    backgroundColor: 'rgba(111, 143, 107, 0.14)',
+    borderColor: 'rgba(111, 143, 107, 0.28)',
+  },
+  ritualTick: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.4,
+    borderColor: 'rgba(176, 102, 74, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 9,
+  },
+  ritualTickDone: {
+    backgroundColor: SAGE,
+    borderColor: SAGE,
+  },
+  ritualBtnText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: TERRACOTTA,
+    letterSpacing: 0.1,
+  },
+  ritualBtnTextDone: { color: SAGE },
 
   // Journal and gratitude sheets
   journalPrompt: {

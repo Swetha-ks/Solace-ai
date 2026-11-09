@@ -11,6 +11,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LanguageProvider, useLanguage } from './src/lib/i18n';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
@@ -30,13 +31,16 @@ const AUTHED_SCREENS = ['home', 'chat', 'breathing', 'profile'];
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppShell />
+      <LanguageProvider>
+        <AppShell />
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }
 
 function AppShell() {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const isWeb = Platform.OS === 'web';
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [booting, setBooting] = useState(true);
@@ -222,7 +226,7 @@ function AppShell() {
                     currentScreen === 'home' && styles.navLabelActive,
                   ]}
                 >
-                  Haven
+                  {t('navHome')}
                 </Text>
               </TouchableOpacity>
 
@@ -265,7 +269,7 @@ function AppShell() {
                     currentScreen === 'breathing' && styles.navLabelActive,
                   ]}
                 >
-                  Breathe
+                  {t('navBreathe')}
                 </Text>
               </TouchableOpacity>
 
@@ -285,7 +289,7 @@ function AppShell() {
                     currentScreen === 'profile' && styles.navLabelActive,
                   ]}
                 >
-                  You
+                  {t('navYou')}
                 </Text>
               </TouchableOpacity>
             </View>

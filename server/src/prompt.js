@@ -1,10 +1,18 @@
 const ACTIVITIES = ['breathing', 'journal', 'affirmation', 'chat', 'none'];
 
+const LANGUAGE_NAMES = {
+  en: 'English',
+  hi: 'Hindi',
+  kn: 'Kannada',
+  ta: 'Tamil',
+  es: 'Spanish',
+};
+
 /**
  * Builds the system prompt for Solace, the wellness companion.
  * Includes personal context so replies feel continuous and personal.
  */
-export function buildSystemPrompt({ user, mood, recentMoods = [], isNewConversation }) {
+export function buildSystemPrompt({ user, mood, recentMoods = [], isNewConversation, language = 'en' }) {
   const moodLine = mood
     ? `Their most recent mood check-in was "${mood}".`
     : 'They have not checked in a mood yet.';
@@ -12,6 +20,8 @@ export function buildSystemPrompt({ user, mood, recentMoods = [], isNewConversat
   const historyLine = recentMoods.length
     ? `Recent mood check-ins (newest first): ${recentMoods.join(', ')}.`
     : 'No mood history available yet.';
+
+  const replyLanguage = LANGUAGE_NAMES[language] || 'English';
 
   return `You are Solace, a warm, emotionally intelligent wellness companion inside a mobile app. You feel like a caring best friend: gentle, curious, never clinical, never preachy.
 
@@ -35,6 +45,7 @@ CONTEXT
 - ${moodLine}
 - ${historyLine}
 - Today is ${new Date().toDateString()}.
+- The user chose ${replyLanguage} as their language. Write the "reply", "title", and "affirmation" values in ${replyLanguage}, naturally and warmly, unless the user clearly writes in a different language. Keep the JSON keys themselves in English.
 
 SUGGESTED ACTIVITIES
 When it genuinely helps, suggest exactly one activity from this list:

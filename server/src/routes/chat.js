@@ -18,7 +18,7 @@ function normalizeActivity(value) {
 // is supplied, and stores both sides of the exchange in SQLite.
 router.post('/', async (req, res) => {
   const userId = req.user.id;
-  const { conversationId, message, mood } = req.body || {};
+  const { conversationId, message, mood, language } = req.body || {};
 
   if (!message || !message.trim()) {
     return res.status(400).json({ error: 'A message is required.' });
@@ -69,6 +69,7 @@ router.post('/', async (req, res) => {
     mood: latestMood,
     recentMoods,
     isNewConversation,
+    language,
   });
 
   let result;

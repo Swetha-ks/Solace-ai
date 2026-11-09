@@ -5,12 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  SafeAreaView,
   Platform,
   Easing,
   Dimensions,
   Image,
+  ScrollView,
+  Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -20,6 +22,7 @@ import {
   Fraunces_600SemiBold_Italic,
 } from '@expo-google-fonts/fraunces';
 import AppIcon from '../components/AppIcon';
+import { LANGUAGES, useLanguage } from '../lib/i18n';
 
 const { width, height } = Dimensions.get('window');
 
@@ -305,6 +308,8 @@ export default function WelcomeScreen({ onGoHome }) {
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
   });
+  const { t, language, setLanguage } = useLanguage();
+  const [langOpen, setLangOpen] = useState(false);
 
   const serifSemiBold = fontsLoaded ? 'Fraunces_600SemiBold' : FALLBACK_SERIF;
   const serifItalic = fontsLoaded ? 'Fraunces_600SemiBold_Italic' : FALLBACK_SERIF;
@@ -428,20 +433,35 @@ export default function WelcomeScreen({ onGoHome }) {
         drift={24}
       />
 
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
         {!isJourneyStarted ? (
+          <ScrollView
+            contentContainerStyle={styles.coverScroll}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
           <Animated.View style={[styles.frame, { opacity: welcomeFade }]}>
             {/* Quiet wordmark */}
             <Animated.View style={[styles.topBar, rise(eyebrowIn, 10)]}>
               <Text style={styles.wordmark}>SOLACE</Text>
               <View style={styles.topRule} />
-              <Text style={styles.topNote}>a quiet place</Text>
+              <Text style={styles.topNote}>{t('quietPlace')}</Text>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={styles.langPill}
+                onPress={() => setLangOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Change language"
+              >
+                <Text style={styles.langPillText}>{language.toUpperCase()}</Text>
+              </TouchableOpacity>
             </Animated.View>
 
             {/* The greeting */}
             <View style={styles.hero}>
               <Animated.View style={rise(eyebrowIn)}>
-                <Text style={styles.eyebrow}>YOUR SPACE, ALWAYS OPEN</Text>
+                <Text style={styles.eyebrow}>{t('welcomeEyebrow')}</Text>
               </Animated.View>
 
               <Animated.Text
@@ -451,19 +471,18 @@ export default function WelcomeScreen({ onGoHome }) {
                   rise(titleIn, 22),
                 ]}
               >
-                Hi,
+                {t('welcomeHi')}
               </Animated.Text>
 
               <Animated.View style={rise(titleIn, 22)}>
                 <Text style={[styles.titleItalic, { fontFamily: serifItalic }]}>
-                  best friend.
+                  {t('welcomeFriend')}
                 </Text>
                 <View style={styles.underline} />
               </Animated.View>
 
               <Animated.Text style={[styles.sub, rise(subIn, 16)]}>
-                You don’t have to carry today alone. Tell me what it felt like — the heavy
-                parts, the quiet parts, all of it.
+                {t('welcomeSub')}
               </Animated.Text>
             </View>
 
@@ -498,18 +517,61 @@ export default function WelcomeScreen({ onGoHome }) {
                 </Animated.View>
               </TouchableOpacity>
 
-              <Text style={styles.orbHint}>TAP TO COME IN</Text>
+              <Text style={styles.orbHint}>{t('welcomeTap')}</Text>
             </Animated.View>
 
             {/* Quiet note */}
             <Animated.View style={[styles.bottom, rise(bottomIn, 14)]}>
-              <Text style={styles.footnote}>No account needed to start. Just you and me.</Text>
+              <Text style={styles.footnote}>{t('welcomeFootnote')}</Text>
             </Animated.View>
           </Animated.View>
+          </ScrollView>
         ) : (
           <HeavenlyBurstScene onComplete={onGoHome} />
         )}
       </SafeAreaView>
+
+      <Modal
+        visible={langOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLangOpen(false)}
+      >
+        <View style={styles.langOverlay}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={StyleSheet.absoluteFill}
+            onPress={() => setLangOpen(false)}
+          />
+          <View style={styles.langSheet}>
+            <View style={styles.langGrabber} />
+            <Text style={[styles.langTitle, { fontFamily: serifSemiBold }]}>
+              {t('languageTitle')}
+            </Text>
+            <Text style={styles.langSub}>{t('languageSub')}</Text>
+
+            {LANGUAGES.map((item) => {
+              const active = item.code === language;
+              return (
+                <TouchableOpacity
+                  key={item.code}
+                  activeOpacity={0.85}
+                  style={[styles.langRow, active && styles.langRowActive]}
+                  onPress={() => {
+                    setLanguage(item.code);
+                    setLangOpen(false);
+                  }}
+                >
+                  <Text style={styles.langNative}>{item.native}</Text>
+                  {active ? (
+                    <AppIcon name="check" size={15} color="#B0664A" strokeWidth={2} />
+                  ) : null}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -518,10 +580,10 @@ const styles = StyleSheet.create({
   // Cover
   root: { flex: 1, backgroundColor: '#FDF9F3' },
   safe: { flex: 1 },
+  coverScroll: { flexGrow: 1 },
   frame: {
     flex: 1,
     width: '100%',
-    maxWidth: 430,
     alignSelf: 'center',
     paddingHorizontal: 28,
     paddingTop: 14,
@@ -552,6 +614,77 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     color: 'rgba(42, 32, 51, 0.42)',
     fontStyle: 'italic',
+  },
+  langPill: {
+    marginLeft: 'auto',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(42, 32, 51, 0.10)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+  },
+  langPillText: {
+    fontSize: 9.5,
+    letterSpacing: 1.1,
+    fontWeight: '700',
+    color: 'rgba(42, 32, 51, 0.55)',
+  },
+  langOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(42, 32, 51, 0.36)',
+    justifyContent: 'flex-end',
+  },
+  langSheet: {
+    width: '100%',
+    backgroundColor: '#FDF9F3',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 30,
+  },
+  langGrabber: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(42, 32, 51, 0.12)',
+    alignSelf: 'center',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  langTitle: {
+    fontSize: 24,
+    color: '#2A2033',
+    letterSpacing: -0.3,
+  },
+  langSub: {
+    fontSize: 12.5,
+    lineHeight: 19,
+    color: 'rgba(42, 32, 51, 0.5)',
+    marginTop: 6,
+    marginBottom: 14,
+  },
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 8,
+  },
+  langRowActive: {
+    backgroundColor: 'rgba(176, 102, 74, 0.10)',
+    borderColor: 'rgba(176, 102, 74, 0.25)',
+  },
+  langNative: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2A2033',
   },
 
   // Greeting

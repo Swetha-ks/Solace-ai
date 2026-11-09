@@ -763,7 +763,6 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, alignItems: 'center' },
   scrollContent: {
     width: '100%',
-    maxWidth: 430,
     paddingHorizontal: 24,
     paddingTop: 6,
     paddingBottom: 40,
@@ -1202,7 +1201,6 @@ const styles = StyleSheet.create({
   modalAlign: { width: '100%', alignItems: 'center' },
   editorSheet: {
     width: '100%',
-    maxWidth: 440,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 26,
