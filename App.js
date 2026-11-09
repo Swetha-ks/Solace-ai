@@ -176,6 +176,7 @@ function AppShell() {
 
         {currentScreen === 'home' && (
           <HomeScreen
+            user={user}
             onOpenChat={() => setCurrentScreen('chat')}
             onOpenBreathing={() => setCurrentScreen('breathing')}
           />

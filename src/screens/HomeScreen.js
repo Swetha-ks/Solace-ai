@@ -11,6 +11,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -251,7 +252,7 @@ function CompanionLight({ onPress, size = 62 }) {
   );
 }
 
-export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
+export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -294,6 +295,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
   const [groundStep, setGroundStep] = useState(0);
 
   const reveal = useRef(new Animated.Value(0)).current;
+  const presencePulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(reveal, {
@@ -302,6 +304,27 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
+  }, []);
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(presencePulse, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(presencePulse, {
+          toValue: 0,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
   }, []);
 
   const rise = {
@@ -593,7 +616,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
   const week = buildWeek(weekMoods);
   const moodAccent = (id) => MOODS.find((m) => m.id === id)?.accent || 'rgba(42, 32, 51, 0.14)';
   const dateLine = now
-    .toLocaleDateString(language, { weekday: 'long', day: 'numeric', month: 'long' })
+    .toLocaleDateString(language, { weekday: 'short', day: 'numeric', month: 'short' })
     .toUpperCase();
   const greetingKey =
     now.getHours() < 5
@@ -603,6 +626,22 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
       : now.getHours() < 17
       ? 'greetingAfternoon'
       : 'greetingEvening';
+
+  const firstName = String(user?.name || '').trim().split(' ')[0];
+  const hourNow = now.getHours();
+  const letterBody = activeMood
+    ? `You told me today feels ${activeMood.label.toLowerCase()}. Thank you for saying it out loud. I am not going anywhere - we can take the next minute slowly.`
+    : hourNow < 5
+    ? 'It is late, and you are still awake. Whatever is keeping you up, you can set a little of it down here.'
+    : hourNow < 12
+    ? 'Before the day asks anything of you, stay here a minute. You do not have to be ready for it all at once.'
+    : hourNow < 17
+    ? 'You have already done more today than you give yourself credit for. How are you, really?'
+    : 'The day is loosening its grip now. You do not have to make sense of all of it tonight.';
+  const letterMarginNote =
+    streak > 1
+      ? `Day ${streak}. You keep showing up, and that is not a small thing.`
+      : 'However today went, you do not have to hold it alone.';
 
   return (
     <View style={styles.root}>
@@ -646,57 +685,105 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
               </TouchableOpacity>
             </View>
 
-            {/* Greeting */}
-            <Animated.View style={[styles.hero, rise]}>
-              <Text style={styles.eyebrow}>{dateLine}</Text>
-              <Text style={[styles.title, { fontFamily: serif }]}>
-                {t(greetingKey)},
-              </Text>
-              <Text style={[styles.titleAccent, { fontFamily: serifItalic }]}>
-                {t('homeFriend')}
-              </Text>
-              <Text style={styles.subtitle}>{t('homeSub')}</Text>
-            </Animated.View>
-
-            {/* A note from Solace */}
-            <Animated.View style={[styles.noteCard, rise]}>
-              <View style={styles.noteHeadRow}>
-                <CompanionLight size={48} onPress={() => setIsVoiceModalOpen(true)} />
-                <View style={styles.noteHeadText}>
-                  <Text maxFontSizeMultiplier={1.2} style={styles.noteEyebrow}>
-                    {t('noteEyebrow')}
-                  </Text>
-                  <Text
-                    maxFontSizeMultiplier={1.2}
-                    style={[styles.noteHeadSub, { fontFamily: serifItalic }]}
-                  >
-                    {t('noteSub')}
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                activeOpacity={0.9}
-                style={styles.noteBody}
-                onPress={onOpenChat}
-                accessibilityRole="button"
-                accessibilityLabel="Talk with Solace"
+            {/* A letter from Solace */}
+            <Animated.View style={[styles.letterWrap, rise]}>
+              <LinearGradient
+                colors={['#FFFDF8', '#FBF2E9', '#F6EDF6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.letterCard}
               >
-                <Text
-                  maxFontSizeMultiplier={1.15}
-                  style={[styles.noteText, { fontFamily: serifItalic }]}
-                >
-                  {t('noteText')}
+                <View pointerEvents="none" style={styles.letterGlow} />
+                <View pointerEvents="none" style={styles.letterRuleLine} />
+
+                <View style={styles.letterTopRow}>
+                  <View style={styles.presencePill}>
+                    <Animated.View
+                      style={[
+                        styles.presenceDot,
+                        {
+                          opacity: presencePulse.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.4, 1],
+                          }),
+                          transform: [
+                            {
+                              scale: presencePulse.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 1.45],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                    <Text style={styles.presenceText}>SOLACE · HERE WITH YOU</Text>
+                  </View>
+                  <Text style={styles.letterDate}>{dateLine}</Text>
+                </View>
+
+                <Text style={[styles.letterDear, { fontFamily: serif }]}>
+                  {t(greetingKey)}
+                  {firstName ? `, ${firstName}` : ''}.
                 </Text>
 
-                <View style={styles.noteActionRow}>
-                  <Text style={styles.noteAction}>{t('noteAction')}</Text>
-                  <AppIcon name="arrowRight" size={14} color={TERRACOTTA} strokeWidth={1.8} />
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
+                <Text style={[styles.letterBody, { fontFamily: serifItalic }]}>
+                  {letterBody}
+                </Text>
 
-            <Text style={styles.noteCaption}>Tap the light to speak instead of typing.</Text>
+                <Text style={styles.letterMarginNote}>{letterMarginNote}</Text>
+
+                <View style={styles.letterSignRow}>
+                  <View style={styles.letterSign}>
+                    <Text style={[styles.letterSignName, { fontFamily: serifItalic }]}>
+                      — Solace
+                    </Text>
+                    <Text style={styles.letterSignNote}>{t('noteSub')}</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setIsVoiceModalOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Speak with Solace"
+                  >
+                    <Image
+                      source={require('../../assets/hug.png')}
+                      style={styles.letterMascot}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.letterActions}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={styles.letterPrimary}
+                    onPress={onOpenChat}
+                    accessibilityRole="button"
+                    accessibilityLabel="Talk with Solace"
+                  >
+                    <Text style={[styles.letterPrimaryText, { fontFamily: serif }]}>
+                      Talk with me
+                    </Text>
+                    <View style={styles.letterPrimaryCircle}>
+                      <AppIcon name="arrowRight" size={13} color={CREAM} strokeWidth={1.9} />
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.letterGhost}
+                    onPress={() => setIsVoiceModalOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Speak instead of typing"
+                  >
+                    <AppIcon name="mic" size={14} color={TERRACOTTA} strokeWidth={1.7} />
+                    <Text style={styles.letterGhostText}>Speak</Text>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
+            </Animated.View>
 
             {/* Mood check-in */}
             <Animated.View style={[styles.section, rise]}>
@@ -900,7 +987,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing }) {
                     <AppIcon name="sun" size={11} color={TERRACOTTA} strokeWidth={1.7} />
                     <Text style={styles.ritualEyebrow}>{t('ritualEyebrow')}</Text>
                   </View>
-                  <Text style={styles.ritualAside}>ONE SMALL THING</Text>
+                  <Text style={styles.ritualAside}>FROM ME TO YOU</Text>
                 </View>
 
                 <Text style={[styles.ritualText, { fontFamily: serifItalic }]}>
@@ -1882,6 +1969,179 @@ const styles = StyleSheet.create({
     color: MUTED,
     maxWidth: 300,
     letterSpacing: 0.1,
+  },
+
+  // Letter from Solace
+  letterWrap: {
+    marginTop: 22,
+    borderRadius: 30,
+    shadowColor: '#B0664A',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.12,
+    shadowRadius: 30,
+    elevation: 5,
+  },
+  letterCard: {
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    overflow: 'hidden',
+  },
+  letterGlow: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    top: -120,
+    right: -80,
+    backgroundColor: 'rgba(233, 185, 160, 0.28)',
+  },
+  letterRuleLine: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: 96,
+    height: 1,
+    backgroundColor: 'rgba(42, 32, 51, 0.06)',
+  },
+  letterTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  presencePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(111, 143, 107, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(111, 143, 107, 0.22)',
+    flexShrink: 1,
+  },
+  presenceDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: SAGE,
+    marginRight: 6,
+  },
+  presenceText: {
+    fontSize: 8,
+    letterSpacing: 1.3,
+    fontWeight: '700',
+    color: 'rgba(79, 124, 107, 0.95)',
+    flexShrink: 1,
+  },
+  letterDate: {
+    fontSize: 8,
+    letterSpacing: 1.2,
+    fontWeight: '700',
+    color: 'rgba(42, 32, 51, 0.32)',
+    marginLeft: 8,
+  },
+  letterDear: {
+    fontSize: 27,
+    lineHeight: 33,
+    letterSpacing: -0.5,
+    color: INK,
+    marginTop: 18,
+  },
+  letterBody: {
+    fontSize: 16.5,
+    lineHeight: 26,
+    letterSpacing: -0.1,
+    color: 'rgba(42, 32, 51, 0.8)',
+    marginTop: 10,
+  },
+  letterMarginNote: {
+    marginTop: 12,
+    fontSize: 11,
+    lineHeight: 17,
+    color: SOFT,
+    letterSpacing: 0.2,
+    fontStyle: 'italic',
+  },
+  letterSignRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  letterSign: { flex: 1, paddingRight: 12 },
+  letterSignName: {
+    fontSize: 16,
+    color: TERRACOTTA,
+    letterSpacing: -0.2,
+  },
+  letterSignNote: {
+    fontSize: 10.5,
+    color: SOFT,
+    letterSpacing: 0.2,
+    marginTop: 2,
+  },
+  letterMascot: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#F7EEE4',
+  },
+  letterActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  letterPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: TERRACOTTA,
+    paddingLeft: 20,
+    paddingRight: 6,
+    paddingVertical: 6,
+    borderRadius: 999,
+    minHeight: 48,
+    shadowColor: TERRACOTTA,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 2,
+  },
+  letterPrimaryText: {
+    color: CREAM,
+    fontSize: 15.5,
+    letterSpacing: 0.1,
+    marginRight: 13,
+  },
+  letterPrimaryCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(253, 249, 243, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  letterGhost: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 102, 74, 0.22)',
+  },
+  letterGhostText: {
+    marginLeft: 6,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: TERRACOTTA,
+    letterSpacing: 0.2,
   },
 
   // Companion note
