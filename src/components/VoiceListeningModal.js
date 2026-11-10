@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Animated,
@@ -10,6 +9,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
@@ -426,31 +426,31 @@ export default function VoiceListeningModal({ visible, onClose, onOpenTextChat }
           <View style={styles.header}>
             <View style={styles.headerBadgeRow}>
               <AppIcon name="ear" size={11} color={TERRACOTTA} strokeWidth={1.8} />
-              <Text style={styles.headerBadge}>
+              <LocalizedText style={styles.headerBadge}>
                 {isRecording ? 'I AM RIGHT HERE' : 'HERE TO LISTEN'}
-              </Text>
+              </LocalizedText>
             </View>
-            <Text style={[styles.headerTitle, { fontFamily: serif }]}>
+            <LocalizedText style={[styles.headerTitle, { fontFamily: serif }]}>
               {isRecording
                 ? 'I’m listening,'
                 : hasDialogue
                 ? 'I heard you,'
                 : 'Say it out loud,'}
-            </Text>
-            <Text style={[styles.headerTitleAccent, { fontFamily: serifItalic }]}>
+            </LocalizedText>
+            <LocalizedText style={[styles.headerTitleAccent, { fontFamily: serifItalic }]}>
               {isRecording
                 ? 'take your time.'
                 : hasDialogue
                 ? 'and I’m still here.'
                 : 'slowly.'}
-            </Text>
-            <Text style={styles.headerSubtitle}>
+            </LocalizedText>
+            <LocalizedText style={styles.headerSubtitle}>
               {isRecording
                 ? 'You can pause. I will wait.'
                 : hasDialogue
                 ? 'Nothing you said scared me away.'
                 : 'No rush. However it comes is fine.'}
-            </Text>
+            </LocalizedText>
           </View>
 
           <View style={[styles.lightStage, hasDialogue && styles.lightStageCompact]}>
@@ -512,9 +512,9 @@ export default function VoiceListeningModal({ visible, onClose, onOpenTextChat }
             </View>
           ) : null}
 
-          <Text style={styles.statusIndicator} numberOfLines={1}>
+          <LocalizedText style={styles.statusIndicator} numberOfLines={1}>
             {statusText}
-          </Text>
+          </LocalizedText>
           <ScrollView
             style={styles.dialogueArea}
             contentContainerStyle={styles.dialogueContent}
@@ -522,24 +522,24 @@ export default function VoiceListeningModal({ visible, onClose, onOpenTextChat }
           >
             {spokenText !== '' && (
               <View style={styles.userBubble}>
-                <Text style={styles.bubbleLabel}>YOU SAID</Text>
-                <Text style={styles.userBubbleText}>{spokenText}</Text>
+                <LocalizedText style={styles.bubbleLabel}>YOU SAID</LocalizedText>
+                <LocalizedText style={styles.userBubbleText}>{spokenText}</LocalizedText>
               </View>
             )}
 
             {aiSpokenReply !== '' && (
               <View style={styles.solaceBubble}>
-                <Text style={styles.bubbleLabelSolace}>SOLACE</Text>
-                <Text style={[styles.solaceBubbleText, { fontFamily: serifItalic }]}>
+                <LocalizedText style={styles.bubbleLabelSolace}>SOLACE</LocalizedText>
+                <LocalizedText style={[styles.solaceBubbleText, { fontFamily: serifItalic }]}>
                   {aiSpokenReply}
-                </Text>
+                </LocalizedText>
               </View>
             )}
 
             {!hasDialogue && (
-              <Text style={[styles.dialogueHint, { fontFamily: serifItalic }]}>
+              <LocalizedText style={[styles.dialogueHint, { fontFamily: serifItalic }]}>
                 Whatever is sitting heavy, you can say it here.
-              </Text>
+              </LocalizedText>
             )}
           </ScrollView>
 
@@ -558,9 +558,9 @@ export default function VoiceListeningModal({ visible, onClose, onOpenTextChat }
                   color={CREAM}
                   strokeWidth={1.7}
                 />
-                <Text style={[styles.voiceTapText, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.voiceTapText, { fontFamily: serif }]}>
                   {isRecording ? 'Listening' : hasDialogue ? 'Say more' : 'Tap to speak'}
-                </Text>
+                </LocalizedText>
               </View>
               <View style={styles.voiceTapCircle}>
                 <AppIcon
@@ -583,7 +583,7 @@ export default function VoiceListeningModal({ visible, onClose, onOpenTextChat }
               accessibilityLabel="Open the chat instead"
             >
               <AppIcon name="pen" size={12} color={SOFT} strokeWidth={1.6} />
-              <Text style={styles.whisperText}>Prefer to write? Open the chat</Text>
+              <LocalizedText style={styles.whisperText}>Prefer to write? Open the chat</LocalizedText>
             </TouchableOpacity>
           </View>
         </View>

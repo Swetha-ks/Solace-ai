@@ -4,6 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const CHANNEL_ID = 'gentle-reminders';
 const IDS_KEY = '@solace_reminder_ids';
 const ON_KEY = '@solace_reminders_on';
+const TIMES_KEY = '@solace_reminder_times';
+
+/** Times the user can change from the You page. */
+export const DEFAULT_REMINDER_TIMES = {
+  morning: { hour: 9, minute: 0 },
+  afternoon: { hour: 15, minute: 0 },
+  evening: { hour: 21, minute: 30 },
+};
 
 /**
  * Small local reminders, offered at three soft points in the day.
@@ -99,7 +107,41 @@ export async function isRemindersEnabled() {
   }
 }
 
-export async function enableReminders() {
+function cleanTime(value, fallback) {
+  const hour = Number(value?.hour);
+  const minute = Number(value?.minute);
+  if (!Number.isFinite(hour) || hour < 0 || hour > 23) return fallback;
+  if (!Number.isFinite(minute) || minute < 0 || minute > 59) return fallback;
+  return { hour: Math.floor(hour), minute: Math.floor(minute) };
+}
+
+/** The user's own reminder times, falling back to the gentle defaults. */
+export async function getReminderTimes() {
+  let saved = {};
+  try {
+    const raw = await AsyncStorage.getItem(TIMES_KEY);
+    saved = raw ? JSON.parse(raw) : {};
+  } catch (e) {}
+  return {
+    morning: cleanTime(saved?.morning, DEFAULT_REMINDER_TIMES.morning),
+    afternoon: cleanTime(saved?.afternoon, DEFAULT_REMINDER_TIMES.afternoon),
+    evening: cleanTime(saved?.evening, DEFAULT_REMINDER_TIMES.evening),
+  };
+}
+
+export async function saveReminderTimes(times) {
+  const clean = {
+    morning: cleanTime(times?.morning, DEFAULT_REMINDER_TIMES.morning),
+    afternoon: cleanTime(times?.afternoon, DEFAULT_REMINDER_TIMES.afternoon),
+    evening: cleanTime(times?.evening, DEFAULT_REMINDER_TIMES.evening),
+  };
+  try {
+    await AsyncStorage.setItem(TIMES_KEY, JSON.stringify(clean));
+  } catch (e) {}
+  return clean;
+}
+
+export async function enableReminders(times) {
   const Notifications = getNotifications();
   if (!Notifications) {
     return { supported: false, granted: false };
@@ -116,10 +158,12 @@ export async function enableReminders() {
     return { supported: true, granted: false };
   }
 
+  const schedule = times ? await saveReminderTimes(times) : await getReminderTimes();
   await cancelStored(Notifications);
 
   const ids = [];
   for (const reminder of REMINDERS) {
+    const time = schedule[reminder.id] || DEFAULT_REMINDER_TIMES[reminder.id];
     try {
       const id = await Notifications.scheduleNotificationAsync({
         content: {
@@ -129,8 +173,8 @@ export async function enableReminders() {
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: reminder.hour,
-          minute: reminder.minute,
+          hour: time.hour,
+          minute: time.minute,
           channelId: CHANNEL_ID,
         },
       });

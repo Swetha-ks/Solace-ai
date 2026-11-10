@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Animated,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -102,22 +102,22 @@ export default function BreathingScreen({ onBack }) {
               accessibilityLabel="Back to Haven"
             >
               <AppIcon name="arrowLeft" size={14} color={TERRACOTTA} strokeWidth={1.8} />
-              <Text style={styles.backText}>Haven</Text>
+              <LocalizedText style={styles.backText}>Haven</LocalizedText>
             </TouchableOpacity>
 
             <View style={styles.cyclePill}>
-              <Text style={styles.cycleText}>
+              <LocalizedText style={styles.cycleText}>
                 {isRunning ? `Cycle ${cycle}` : 'Paused'}
-              </Text>
+              </LocalizedText>
             </View>
           </View>
 
           {/* Hero */}
           <View style={styles.hero}>
-            <Text style={styles.eyebrow}>A SMALL PAUSE</Text>
-            <Text style={[styles.title, { fontFamily: serif }]}>Follow your breath,</Text>
-            <Text style={[styles.titleAccent, { fontFamily: serifItalic }]}>nothing else.</Text>
-            <Text style={styles.subtitle}>Four seconds in. Four seconds out. That is enough.</Text>
+            <LocalizedText style={styles.eyebrow}>A SMALL PAUSE</LocalizedText>
+            <LocalizedText style={[styles.title, { fontFamily: serif }]}>Follow your breath,</LocalizedText>
+            <LocalizedText style={[styles.titleAccent, { fontFamily: serifItalic }]}>nothing else.</LocalizedText>
+            <LocalizedText style={styles.subtitle}>Four seconds in. Four seconds out. That is enough.</LocalizedText>
           </View>
 
           {/* Breathing figure */}
@@ -145,12 +145,12 @@ export default function BreathingScreen({ onBack }) {
               </LinearGradient>
             </Animated.View>
 
-            <Text style={[styles.phaseLabel, { fontFamily: serif }]}>
+            <LocalizedText style={[styles.phaseLabel, { fontFamily: serif }]}>
               {PHASES[phaseIndex].label}
-            </Text>
-            <Text style={styles.subHint}>
+            </LocalizedText>
+            <LocalizedText style={styles.subHint}>
               Let your breath follow the gentle rhythm of the circle
-            </Text>
+            </LocalizedText>
           </View>
 
           {/* Four small steps */}
@@ -160,9 +160,9 @@ export default function BreathingScreen({ onBack }) {
               return (
                 <View key={phase.label} style={styles.phaseStep}>
                   <View style={[styles.phaseDot, isActive && styles.phaseDotActive]} />
-                  <Text style={[styles.phaseName, isActive && styles.phaseNameActive]}>
+                  <LocalizedText style={[styles.phaseName, isActive && styles.phaseNameActive]}>
                     {phase.short}
-                  </Text>
+                  </LocalizedText>
                 </View>
               );
             })}
@@ -184,9 +184,9 @@ export default function BreathingScreen({ onBack }) {
                   color={CREAM}
                   strokeWidth={1.9}
                 />
-                <Text style={[styles.pauseResumeText, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.pauseResumeText, { fontFamily: serif }]}>
                   {isRunning ? 'Pause this moment' : 'Begin again'}
-                </Text>
+                </LocalizedText>
               </View>
               <View style={styles.pauseCircle}>
                 <AppIcon
@@ -198,9 +198,9 @@ export default function BreathingScreen({ onBack }) {
               </View>
             </TouchableOpacity>
 
-            <Text style={styles.caption}>
+            <LocalizedText style={styles.caption}>
               {isRunning ? 'Nothing to achieve. Just this breath.' : 'Paused. Come back when you are ready.'}
-            </Text>
+            </LocalizedText>
           </View>
         </View>
       </SafeAreaView>

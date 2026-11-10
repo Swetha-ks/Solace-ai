@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
@@ -9,6 +8,7 @@ import {
   Easing,
   Platform,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +18,7 @@ import {
   Fraunces_600SemiBold_Italic,
 } from '@expo-google-fonts/fraunces';
 import AppIcon from '../components/AppIcon';
+import { useLanguage } from '../lib/i18n';
 
 const { width: windowWidth } = Dimensions.get('window');
 
@@ -301,23 +302,23 @@ function Slide({
         <Animated.View style={[styles.sheetCopy, copyAnimation]}>
           <View style={styles.eyebrowRow}>
             <AppIcon name={item.icon} size={11} color={ACCENT} strokeWidth={1.8} />
-            <Text style={[styles.eyebrow, { color: ACCENT }]}>{item.eyebrow}</Text>
+            <LocalizedText style={[styles.eyebrow, { color: ACCENT }]}>{tr(item.eyebrow)}</LocalizedText>
           </View>
 
-          <Text style={[styles.title, compact && styles.titleCompact, { fontFamily: serifSemiBold }]}>
-            {item.titleTop}
-          </Text>
-          <Text
+          <LocalizedText style={[styles.title, compact && styles.titleCompact, { fontFamily: serifSemiBold }]}>
+            {tr(item.titleTop)}
+          </LocalizedText>
+          <LocalizedText
             style={[
               styles.titleAccent,
               compact && styles.titleAccentCompact,
               { fontFamily: serifItalic, color: ACCENT },
             ]}
           >
-            {item.titleAccent}
-          </Text>
+            {tr(item.titleAccent)}
+          </LocalizedText>
 
-          <Text style={[styles.text, compact && styles.textCompact]}>{item.text}</Text>
+          <LocalizedText style={[styles.text, compact && styles.textCompact]}>{tr(item.text)}</LocalizedText>
         </Animated.View>
 
         <View style={styles.footer}>
@@ -339,9 +340,9 @@ function Slide({
             accessibilityRole="button"
             accessibilityLabel={isLast ? 'Get started' : 'Continue'}
           >
-            <Text style={[styles.ctaText, { fontFamily: serifSemiBold }]}>
+            <LocalizedText style={[styles.ctaText, { fontFamily: serifSemiBold }]}>
               {isLast ? 'Get started' : 'Continue'}
-            </Text>
+            </LocalizedText>
             <View style={styles.ctaArrow}>
               <AppIcon name="arrowRight" size={17} color={CREAM} strokeWidth={1.8} />
             </View>
@@ -353,6 +354,7 @@ function Slide({
 }
 
 export default function OnboardingScreen({ onComplete, onSkip }) {
+  const { tr } = useLanguage();
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -459,12 +461,12 @@ export default function OnboardingScreen({ onComplete, onSkip }) {
           {/* Quiet header, fixed above the sky */}
           <View pointerEvents="box-none" style={styles.topBar}>
             <View style={styles.brandRow}>
-              <Text style={styles.wordmark}>SOLACE</Text>
+              <LocalizedText style={styles.wordmark}>SOLACE</LocalizedText>
               <View style={styles.topRule} />
-              <Text style={styles.topNote}>a quiet place</Text>
+              <LocalizedText style={styles.topNote}>a quiet place</LocalizedText>
             </View>
             <TouchableOpacity onPress={handleSkip} activeOpacity={0.7} style={styles.skipBtn}>
-              <Text style={styles.skipText}>Skip</Text>
+              <LocalizedText style={styles.skipText}>Skip</LocalizedText>
             </TouchableOpacity>
           </View>
         </View>

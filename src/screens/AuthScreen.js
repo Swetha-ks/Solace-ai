@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
@@ -12,6 +10,8 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
+import LocalizedTextInput from '../components/LocalizedTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -167,9 +167,9 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
               </TouchableOpacity>
 
               <View style={styles.brandRow}>
-                <Text style={styles.wordmark}>SOLACE</Text>
+                <LocalizedText style={styles.wordmark}>SOLACE</LocalizedText>
                 <View style={styles.topRule} />
-                <Text style={styles.topNote}>a quiet place</Text>
+                <LocalizedText style={styles.topNote}>a quiet place</LocalizedText>
               </View>
 
               <View style={styles.backSpacer} />
@@ -179,23 +179,23 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
             <Animated.View style={[styles.hero, rise]}>
               <View style={styles.eyebrowRow}>
                 <AppIcon name="feather" size={11} color={TERRACOTTA} strokeWidth={1.8} />
-                <Text style={styles.eyebrow}>
+                <LocalizedText style={styles.eyebrow}>
                   {isSignup ? 'YOUR SPACE, ALWAYS OPEN' : 'WELCOME BACK'}
-                </Text>
+                </LocalizedText>
               </View>
 
-              <Text style={[styles.title, { fontFamily: serifSemiBold }]}>
+              <LocalizedText style={[styles.title, { fontFamily: serifSemiBold }]}>
                 {isSignup ? 'Let’s create' : 'Good to see you'}
-              </Text>
-              <Text style={[styles.titleAccent, { fontFamily: serifItalic }]}>
+              </LocalizedText>
+              <LocalizedText style={[styles.titleAccent, { fontFamily: serifItalic }]}>
                 {isSignup ? 'your safe space.' : 'again.'}
-              </Text>
+              </LocalizedText>
 
-              <Text style={styles.subtitle}>
+              <LocalizedText style={styles.subtitle}>
                 {isSignup
                   ? 'A calm place that remembers you, and grows with you.'
                   : 'I kept your conversations and check-ins safe for you.'}
-              </Text>
+              </LocalizedText>
             </Animated.View>
 
             {/* Two ways in */}
@@ -207,7 +207,7 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
                 accessibilityState={{ selected: isSignup }}
                 style={styles.tabBtn}
               >
-                <Text style={[styles.tabText, isSignup && styles.tabTextActive]}>Create account</Text>
+                <LocalizedText style={[styles.tabText, isSignup && styles.tabTextActive]}>Create account</LocalizedText>
                 <View style={[styles.tabLine, isSignup && styles.tabLineActive]} />
               </TouchableOpacity>
 
@@ -218,7 +218,7 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
                 accessibilityState={{ selected: !isSignup }}
                 style={styles.tabBtn}
               >
-                <Text style={[styles.tabText, !isSignup && styles.tabTextActive]}>Log in</Text>
+                <LocalizedText style={[styles.tabText, !isSignup && styles.tabTextActive]}>Log in</LocalizedText>
                 <View style={[styles.tabLine, !isSignup && styles.tabLineActive]} />
               </TouchableOpacity>
             </Animated.View>
@@ -227,9 +227,9 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
             <Animated.View style={[styles.card, rise]}>
               {isSignup && (
                 <View style={styles.field}>
-                  <Text style={styles.label}>YOUR NAME</Text>
+                  <LocalizedText style={styles.label}>YOUR NAME</LocalizedText>
                   <View style={fieldStyle('name')}>
-                    <TextInput
+                    <LocalizedTextInput
                       style={styles.input}
                       placeholder="What should I call you?"
                       placeholderTextColor="rgba(42, 32, 51, 0.32)"
@@ -246,9 +246,9 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
               )}
 
               <View style={styles.field}>
-                <Text style={styles.label}>EMAIL</Text>
+                <LocalizedText style={styles.label}>EMAIL</LocalizedText>
                 <View style={fieldStyle('email')}>
-                  <TextInput
+                  <LocalizedTextInput
                     style={styles.input}
                     placeholder="you@example.com"
                     placeholderTextColor="rgba(42, 32, 51, 0.32)"
@@ -266,9 +266,9 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.label}>PASSWORD</Text>
+                <LocalizedText style={styles.label}>PASSWORD</LocalizedText>
                 <View style={[fieldStyle('password'), styles.passwordWrap]}>
-                  <TextInput
+                  <LocalizedTextInput
                     style={styles.passwordInput}
                     placeholder="At least 6 characters"
                     placeholderTextColor="rgba(42, 32, 51, 0.32)"
@@ -289,14 +289,14 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
                     accessibilityRole="button"
                     accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    <Text style={styles.showText}>{showPassword ? 'HIDE' : 'SHOW'}</Text>
+                    <LocalizedText style={styles.showText}>{showPassword ? 'HIDE' : 'SHOW'}</LocalizedText>
                   </TouchableOpacity>
                 </View>
               </View>
 
               {error ? (
                 <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>{error}</Text>
+                  <LocalizedText style={styles.errorText}>{error}</LocalizedText>
                 </View>
               ) : null}
 
@@ -312,9 +312,9 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
                   <ActivityIndicator color={CREAM} />
                 ) : (
                   <View style={styles.submitContent}>
-                    <Text style={[styles.submitText, { fontFamily: serifSemiBold }]}>
+                    <LocalizedText style={[styles.submitText, { fontFamily: serifSemiBold }]}>
                       {isSignup ? 'Create my space' : 'Come back in'}
-                    </Text>
+                    </LocalizedText>
                     <View style={styles.submitArrow}>
                       <AppIcon name="arrowRight" size={16} color={CREAM} strokeWidth={1.8} />
                     </View>
@@ -324,7 +324,7 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
 
               <View style={styles.dividerRow}>
                 <View style={styles.divider} />
-                <Text style={styles.dividerText}>or</Text>
+                <LocalizedText style={styles.dividerText}>or</LocalizedText>
                 <View style={styles.divider} />
               </View>
 
@@ -337,14 +337,14 @@ export default function AuthScreen({ onAuthenticated, onBack }) {
                 accessibilityLabel="Continue as guest"
               >
                 <AppIcon name="sprout" size={15} color={LILAC} strokeWidth={1.5} />
-                <Text style={styles.guestText}>Continue as guest</Text>
+                <LocalizedText style={styles.guestText}>Continue as guest</LocalizedText>
               </TouchableOpacity>
 
               <View style={styles.privacyRow}>
                 <AppIcon name="lock" size={11} color={SOFT} strokeWidth={1.6} />
-                <Text style={styles.privacyNote}>
+                <LocalizedText style={styles.privacyNote}>
                   Private by design. Delete any conversation, anytime.
-                </Text>
+                </LocalizedText>
               </View>
             </Animated.View>
           </ScrollView>

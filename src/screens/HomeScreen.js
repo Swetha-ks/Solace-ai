@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Animated,
   Easing,
   Modal,
-  TextInput,
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
+import LocalizedTextInput from '../components/LocalizedTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
@@ -274,7 +274,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
   const serifItalic = fontsLoaded
     ? 'Fraunces_600SemiBold_Italic'
     : 'Georgia, "Times New Roman", serif';
-  const { t } = useLanguage();
+  const { t, tr } = useLanguage();
 
   const [selectedMood, setSelectedMood] = useState(null);
   const [streak, setStreak] = useState(0);
@@ -739,9 +739,9 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
             {/* Quiet header */}
             <View style={styles.topBar}>
               <View style={styles.brandRow}>
-                <Text style={styles.wordmark}>SOLACE</Text>
+                <LocalizedText style={styles.wordmark}>SOLACE</LocalizedText>
                 <View style={styles.topRule} />
-                <Text style={styles.topNote}>{t('quietPlace')}</Text>
+                <LocalizedText style={styles.topNote}>{t('quietPlace')}</LocalizedText>
               </View>
 
               {streak >= 2 ? (
@@ -753,7 +753,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                   accessibilityLabel="Your gentle streak"
                 >
                   <AppIcon name="streak" size={11} color={TERRACOTTA} strokeWidth={1.6} />
-                  <Text style={styles.streakText}>{`${streak} days`}</Text>
+                  <LocalizedText style={styles.streakText}>{`${streak} days`}</LocalizedText>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -783,8 +783,8 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                   </View>
 
                   <View style={styles.heroTopText}>
-                    <Text style={styles.heroBrand}>SOLACE</Text>
-                    <Text style={styles.heroLive}>here with you, right now</Text>
+                    <LocalizedText style={styles.heroBrand}>SOLACE</LocalizedText>
+                    <LocalizedText style={styles.heroLive}>here with you, right now</LocalizedText>
                   </View>
 
                   <View style={styles.heroMomentChip}>
@@ -794,7 +794,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                       color={TERRACOTTA}
                       strokeWidth={1.7}
                     />
-                    <Text style={styles.heroMomentText}>
+                    <LocalizedText style={styles.heroMomentText}>
                       {hourNow < 5
                         ? 'late'
                         : hourNow < 12
@@ -802,17 +802,17 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                         : hourNow < 17
                         ? 'afternoon'
                         : 'evening'}
-                    </Text>
+                    </LocalizedText>
                   </View>
                 </View>
 
-                <Text style={[styles.heroGreeting, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.heroGreeting, { fontFamily: serif }]}>
                   {t(greetingKey)}
                   {firstName ? `, ${firstName}` : ''}.
-                </Text>
-                <Text style={[styles.heroSub, { fontFamily: serifItalic }]}>
+                </LocalizedText>
+                <LocalizedText style={[styles.heroSub, { fontFamily: serifItalic }]}>
                   {t('homeSub')}
-                </Text>
+                </LocalizedText>
 
                 <View style={styles.heroActions}>
                   <TouchableOpacity
@@ -823,9 +823,9 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     accessibilityLabel="Talk with Solace"
                   >
                     <AppIcon name="chat" size={16} color={CREAM} strokeWidth={1.8} />
-                    <Text style={[styles.heroPrimaryText, { fontFamily: serif }]}>
+                    <LocalizedText style={[styles.heroPrimaryText, { fontFamily: serif }]}>
                       Talk with me
-                    </Text>
+                    </LocalizedText>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -836,7 +836,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     accessibilityLabel="Speak instead of typing"
                   >
                     <AppIcon name="mic" size={15} color={TERRACOTTA} strokeWidth={1.7} />
-                    <Text style={styles.heroSpeakText}>Speak</Text>
+                    <LocalizedText style={styles.heroSpeakText}>Speak</LocalizedText>
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
@@ -853,14 +853,14 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
             <Animated.View style={[styles.section, rise]}>
               <View style={styles.sectionHead}>
                 <View>
-                  <Text style={[styles.sectionTitle, { fontFamily: serif }]}>
+                  <LocalizedText style={[styles.sectionTitle, { fontFamily: serif }]}>
                     How is your heart?
-                  </Text>
-                  <Text style={styles.sectionSub}>One honest tap. That’s all this asks.</Text>
+                  </LocalizedText>
+                  <LocalizedText style={styles.sectionSub}>One honest tap. That’s all this asks.</LocalizedText>
                 </View>
-                <Text style={styles.sectionAside}>
+                <LocalizedText style={styles.sectionAside}>
                   {selectedMood ? 'Saved for today' : 'Not checked in yet'}
-                </Text>
+                </LocalizedText>
               </View>
 
               <View style={styles.moodRow}>
@@ -873,7 +873,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                       style={styles.moodItem}
                       onPress={() => handleSelectMood(m.id)}
                       accessibilityRole="button"
-                      accessibilityLabel={m.label}
+                      accessibilityLabel={tr(m.label)}
                       accessibilityState={{ selected: isSelected }}
                     >
                       <View
@@ -891,14 +891,14 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                           <AppIcon name={m.icon} size={20} color={m.accent} strokeWidth={1.5} />
                         </LinearGradient>
                       </View>
-                      <Text
+                      <LocalizedText
                         style={[
                           styles.moodLabel,
                           isSelected && { color: m.accent, fontWeight: '700' },
                         ]}
                       >
-                        {m.label}
-                      </Text>
+                        {tr(m.label)}
+                      </LocalizedText>
                     </TouchableOpacity>
                   );
                 })}
@@ -922,28 +922,28 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                         strokeWidth={1.6}
                       />
                     </View>
-                    <Text
+                    <LocalizedText
                       style={[styles.moodSuggestionEyebrow, { color: activeMood.accent }]}
                     >
                       A GENTLE NEXT STEP
-                    </Text>
+                    </LocalizedText>
                   </View>
 
-                  <Text style={[styles.moodSuggestionTitle, { fontFamily: serif }]}>
-                    {activeMood.title}
-                  </Text>
-                  <Text style={styles.moodSuggestionBody}>{activeMood.body}</Text>
+                  <LocalizedText style={[styles.moodSuggestionTitle, { fontFamily: serif }]}>
+                    {tr(activeMood.title)}
+                  </LocalizedText>
+                  <LocalizedText style={styles.moodSuggestionBody}>{tr(activeMood.body)}</LocalizedText>
 
                   <TouchableOpacity
                     activeOpacity={0.85}
                     style={styles.moodSuggestionPrimary}
                     onPress={() => runMoodAction(activeMood.action)}
                     accessibilityRole="button"
-                    accessibilityLabel={activeMood.actionLabel}
+                    accessibilityLabel={tr(activeMood.actionLabel)}
                   >
-                    <Text style={[styles.moodSuggestionPrimaryText, { fontFamily: serif }]}>
-                      {activeMood.actionLabel}
-                    </Text>
+                    <LocalizedText style={[styles.moodSuggestionPrimaryText, { fontFamily: serif }]}>
+                      {tr(activeMood.actionLabel)}
+                    </LocalizedText>
                     <View style={styles.moodSuggestionCircle}>
                       <AppIcon name="arrowRight" size={13} color={CREAM} strokeWidth={1.8} />
                     </View>
@@ -954,11 +954,11 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     style={styles.moodSuggestionSecondaryBtn}
                     onPress={() => runMoodAction(activeMood.secondary)}
                     accessibilityRole="button"
-                    accessibilityLabel={activeMood.secondaryLabel}
+                    accessibilityLabel={tr(activeMood.secondaryLabel)}
                   >
-                    <Text style={styles.moodSuggestionSecondary}>
-                      {activeMood.secondaryLabel}
-                    </Text>
+                    <LocalizedText style={styles.moodSuggestionSecondary}>
+                      {tr(activeMood.secondaryLabel)}
+                    </LocalizedText>
                   </TouchableOpacity>
                 </View>
               ) : null}
@@ -979,24 +979,24 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                   <View style={styles.affirmationTopRow}>
                     <View style={styles.affirmationBadge}>
                       <AppIcon name="sparkles" size={11} color={TERRACOTTA} strokeWidth={1.7} />
-                      <Text style={styles.affirmationLabel}>TODAY’S AFFIRMATION</Text>
+                      <LocalizedText style={styles.affirmationLabel}>TODAY’S AFFIRMATION</LocalizedText>
                     </View>
-                    <Text style={styles.affirmationDate}>
+                    <LocalizedText style={styles.affirmationDate}>
                       {now
                         .toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
                         .toUpperCase()}
-                    </Text>
+                    </LocalizedText>
                   </View>
 
-                  <Text style={[styles.affirmationMark, { fontFamily: serif }]}>“</Text>
+                  <LocalizedText style={[styles.affirmationMark, { fontFamily: serif }]}>“</LocalizedText>
 
-                  <Text style={[styles.affirmationText, { fontFamily: serifItalic }]}>
+                  <LocalizedText style={[styles.affirmationText, { fontFamily: serifItalic }]}>
                     {affirmation}
-                  </Text>
+                  </LocalizedText>
 
                   <View style={styles.affirmationFootRow}>
                     <View style={styles.affirmationRule} />
-                    <Text style={styles.affirmationFoot}>read it once more, slowly</Text>
+                    <LocalizedText style={styles.affirmationFoot}>read it once more, slowly</LocalizedText>
                   </View>
                 </LinearGradient>
               </Animated.View>
@@ -1015,15 +1015,15 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 <View style={styles.tinyTopRow}>
                   <View style={styles.tinyBadge}>
                     <AppIcon name="sparkles" size={11} color={TERRACOTTA} strokeWidth={1.7} />
-                    <Text style={styles.tinyEyebrow}>ONE SMALL THING, RIGHT NOW</Text>
+                    <LocalizedText style={styles.tinyEyebrow}>ONE SMALL THING, RIGHT NOW</LocalizedText>
                   </View>
-                  <Text style={styles.tinyAside}>NOT A TASK</Text>
+                  <LocalizedText style={styles.tinyAside}>NOT A TASK</LocalizedText>
                 </View>
 
-                <Text style={[styles.tinyText, { fontFamily: serifItalic }]}>{tinyAction}</Text>
+                <LocalizedText style={[styles.tinyText, { fontFamily: serifItalic }]}>{tr(tinyAction)}</LocalizedText>
 
                 <View style={styles.tinyFootRow}>
-                  <Text style={styles.tinyFoot}>Nothing to finish. Nothing to keep.</Text>
+                  <LocalizedText style={styles.tinyFoot}>Nothing to finish. Nothing to keep.</LocalizedText>
                   <TouchableOpacity
                     activeOpacity={0.85}
                     style={styles.tinyShuffle}
@@ -1032,7 +1032,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     accessibilityLabel="Show another small thing"
                   >
                     <AppIcon name="sparkles" size={12} color={CREAM} strokeWidth={1.8} />
-                    <Text style={styles.tinyShuffleText}>Another</Text>
+                    <LocalizedText style={styles.tinyShuffleText}>Another</LocalizedText>
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
@@ -1042,14 +1042,14 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
             <Animated.View style={[styles.section, rise]}>
               <View style={styles.sectionHead}>
                 <View>
-                  <Text style={[styles.sectionTitle, { fontFamily: serif }]}>
+                  <LocalizedText style={[styles.sectionTitle, { fontFamily: serif }]}>
                     A minute to play
-                  </Text>
-                  <Text style={styles.sectionSub}>
+                  </LocalizedText>
+                  <LocalizedText style={styles.sectionSub}>
                     No score. No timer. Just a small patch of calm.
-                  </Text>
+                  </LocalizedText>
                 </View>
-                <Text style={styles.sectionAside}>JUST FOR FUN</Text>
+                <LocalizedText style={styles.sectionAside}>JUST FOR FUN</LocalizedText>
               </View>
 
               <TouchableOpacity
@@ -1067,18 +1067,18 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                   <View pointerEvents="none" style={styles.gameCardGlow} />
 
                   <View style={styles.gameCardText}>
-                    <Text style={styles.gameCardEyebrow}>A QUIET GAME</Text>
-                    <Text style={[styles.gameCardTitle, { fontFamily: serif }]}>
+                    <LocalizedText style={styles.gameCardEyebrow}>A QUIET GAME</LocalizedText>
+                    <LocalizedText style={[styles.gameCardTitle, { fontFamily: serif }]}>
                       Grow a little garden
-                    </Text>
-                    <Text style={styles.gameCardSub}>
+                    </LocalizedText>
+                    <LocalizedText style={styles.gameCardSub}>
                       Tap the soil and watch it bloom. Nothing here can be lost.
-                    </Text>
+                    </LocalizedText>
 
                     <View style={styles.gameCardCta}>
-                      <Text style={styles.gameCardCtaText}>
+                      <LocalizedText style={styles.gameCardCtaText}>
                         {gardenBlooms > 0 ? 'Back to your garden' : 'Play a minute'}
-                      </Text>
+                      </LocalizedText>
                       <AppIcon name="arrowRight" size={13} color={CREAM} strokeWidth={1.9} />
                     </View>
                   </View>
@@ -1107,10 +1107,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
             <Animated.View style={[styles.section, rise]}>
               <View style={styles.sectionHead}>
                 <View>
-                  <Text style={[styles.sectionTitle, { fontFamily: serif }]}>A little support</Text>
-                  <Text style={styles.sectionSub}>Six quiet tools, each with its own door.</Text>
+                  <LocalizedText style={[styles.sectionTitle, { fontFamily: serif }]}>A little support</LocalizedText>
+                  <LocalizedText style={styles.sectionSub}>Six quiet tools, each with its own door.</LocalizedText>
                 </View>
-                <Text style={styles.sectionAside}>YOURS TO USE</Text>
+                <LocalizedText style={styles.sectionAside}>YOURS TO USE</LocalizedText>
               </View>
 
               {/* Private journal — featured */}
@@ -1133,17 +1133,17 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                       <AppIcon name="pen" size={20} color={TERRACOTTA} strokeWidth={1.5} />
                     </View>
                     <View style={styles.featureInfo}>
-                      <Text style={styles.featureEyebrow}>PRIVATE, ON THIS DEVICE</Text>
-                      <Text style={[styles.featureTitle, { fontFamily: serif }]}>
+                      <LocalizedText style={styles.featureEyebrow}>PRIVATE, ON THIS DEVICE</LocalizedText>
+                      <LocalizedText style={[styles.featureTitle, { fontFamily: serif }]}>
                         Your journal
-                      </Text>
-                      <Text style={styles.featureSub}>
+                      </LocalizedText>
+                      <LocalizedText style={styles.featureSub}>
                         {journalEntries.length > 0
                           ? `${journalEntries.length} ${
                               journalEntries.length === 1 ? 'line' : 'lines'
                             } kept. Write another whenever it helps.`
                           : 'A page that asks nothing of you. Start anywhere.'}
-                      </Text>
+                      </LocalizedText>
                     </View>
                     <View style={styles.featureCircle}>
                       <AppIcon name="arrowRight" size={14} color={TERRACOTTA} strokeWidth={1.8} />
@@ -1171,8 +1171,8 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     <View style={styles.toolTileIcon}>
                       <AppIcon name="wind" size={19} color={SAGE} strokeWidth={1.5} />
                     </View>
-                    <Text style={styles.toolTileTitle}>Breathing</Text>
-                    <Text style={styles.toolTileSub}>Two quiet minutes</Text>
+                    <LocalizedText style={styles.toolTileTitle}>Breathing</LocalizedText>
+                    <LocalizedText style={styles.toolTileSub}>Two quiet minutes</LocalizedText>
                     <View style={styles.toolTileCircle}>
                       <AppIcon name="arrowRight" size={12} color={SAGE} strokeWidth={1.8} />
                     </View>
@@ -1196,12 +1196,12 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     <View style={styles.toolTileIcon}>
                       <AppIcon name="sprout" size={19} color={LILAC} strokeWidth={1.5} />
                     </View>
-                    <Text style={styles.toolTileTitle}>Daily habits</Text>
-                    <Text style={styles.toolTileSub}>
+                    <LocalizedText style={styles.toolTileTitle}>Daily habits</LocalizedText>
+                    <LocalizedText style={styles.toolTileSub}>
                       {keptHabits > 0
                         ? `${keptHabits} of ${allHabits.length} kept`
                         : 'Small steps that add up'}
-                    </Text>
+                    </LocalizedText>
                     <View style={styles.toolTileCircle}>
                       <AppIcon name="arrowRight" size={12} color={LILAC} strokeWidth={1.8} />
                     </View>
@@ -1227,8 +1227,8 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     <View style={styles.toolTileIcon}>
                       <AppIcon name="leaf" size={19} color="#4F7C6B" strokeWidth={1.5} />
                     </View>
-                    <Text style={styles.toolTileTitle}>Grounding</Text>
-                    <Text style={styles.toolTileSub}>Five senses, back to now</Text>
+                    <LocalizedText style={styles.toolTileTitle}>Grounding</LocalizedText>
+                    <LocalizedText style={styles.toolTileSub}>Five senses, back to now</LocalizedText>
                     <View style={styles.toolTileCircle}>
                       <AppIcon name="arrowRight" size={12} color="#4F7C6B" strokeWidth={1.8} />
                     </View>
@@ -1256,12 +1256,12 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     <View style={styles.toolTileIcon}>
                       <AppIcon name="heart" size={19} color={TERRACOTTA} strokeWidth={1.5} />
                     </View>
-                    <Text style={styles.toolTileTitle}>Gratitude jar</Text>
-                    <Text style={styles.toolTileSub}>
+                    <LocalizedText style={styles.toolTileTitle}>Gratitude jar</LocalizedText>
+                    <LocalizedText style={styles.toolTileSub}>
                       {gratitudeEntries.length > 0
                         ? `${gratitudeEntries.length} small thanks kept`
                         : 'One small glad thing'}
-                    </Text>
+                    </LocalizedText>
                     <View style={styles.toolTileCircle}>
                       <AppIcon name="arrowRight" size={12} color={TERRACOTTA} strokeWidth={1.8} />
                     </View>
@@ -1276,15 +1276,15 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     <AppIcon name="chat" size={15} color={TERRACOTTA} strokeWidth={1.6} />
                   </View>
                   <View style={styles.quickChatHeadText}>
-                    <Text style={styles.quickChatEyebrow}>IF IT IS STILL LOUD</Text>
-                    <Text style={[styles.quickChatTitle, { fontFamily: serif }]}>
+                    <LocalizedText style={styles.quickChatEyebrow}>IF IT IS STILL LOUD</LocalizedText>
+                    <LocalizedText style={[styles.quickChatTitle, { fontFamily: serif }]}>
                       Tell me one line.
-                    </Text>
+                    </LocalizedText>
                   </View>
                 </View>
 
                 <View style={styles.quickChatRow}>
-                  <TextInput
+                  <LocalizedTextInput
                     value={quickChatText}
                     onChangeText={setQuickChatText}
                     placeholder="Say it however it comes..."
@@ -1331,17 +1331,17 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                       <AppIcon name="moon" size={20} color="#5C5A9C" strokeWidth={1.5} />
                     </View>
                     <View style={styles.featureInfo}>
-                      <Text style={[styles.featureEyebrow, { color: '#5C5A9C' }]}>
+                      <LocalizedText style={[styles.featureEyebrow, { color: '#5C5A9C' }]}>
                         BEFORE THE DAY CLOSES
-                      </Text>
-                      <Text style={[styles.featureTitle, { fontFamily: serif }]}>
+                      </LocalizedText>
+                      <LocalizedText style={[styles.featureTitle, { fontFamily: serif }]}>
                         Evening wind-down
-                      </Text>
-                      <Text style={styles.featureSub}>
+                      </LocalizedText>
+                      <LocalizedText style={styles.featureSub}>
                         {keptWindDown > 0
                           ? `${keptWindDown} of ${WIND_DOWN_STEPS.length} steps tonight. The rest can wait.`
                           : 'Four quiet steps, then let the day be enough.'}
-                      </Text>
+                      </LocalizedText>
                     </View>
                     <View style={styles.featureCircle}>
                       <AppIcon name="arrowRight" size={14} color="#5C5A9C" strokeWidth={1.8} />
@@ -1351,9 +1351,9 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
               </TouchableOpacity>
             </Animated.View>
 
-            <Text style={[styles.footerNote, { fontFamily: serifItalic }]}>
+            <LocalizedText style={[styles.footerNote, { fontFamily: serifItalic }]}>
               Small steps count. So do you.
-            </Text>
+            </LocalizedText>
           </ScrollView>
         </View>
         </KeyboardAvoidingView>
@@ -1388,10 +1388,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
               >
                 <View style={styles.habitsHeader}>
                   <View>
-                    <Text style={styles.habitsEyebrow}>A LITTLE EVERY DAY</Text>
-                    <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                    <LocalizedText style={styles.habitsEyebrow}>A LITTLE EVERY DAY</LocalizedText>
+                    <LocalizedText style={[styles.habitsTitle, { fontFamily: serif }]}>
                       Gentle habits
-                    </Text>
+                    </LocalizedText>
                   </View>
                   <TouchableOpacity
                     style={styles.habitsCloseBtn}
@@ -1403,14 +1403,14 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.habitsSub}>
+                <LocalizedText style={styles.habitsSub}>
                   Tiny things, done kindly. Miss a day and nothing breaks.
-                </Text>
+                </LocalizedText>
 
                 <View style={styles.habitsProgressRow}>
-                  <Text style={styles.habitsProgressText}>
+                  <LocalizedText style={styles.habitsProgressText}>
                     {keptHabits} of {allHabits.length} kept today
-                  </Text>
+                  </LocalizedText>
                   <View style={styles.habitsProgressTrack}>
                     <View
                       style={[
@@ -1437,7 +1437,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                       onPress={() => toggleHabit(habit.id)}
                       accessibilityRole="button"
                       accessibilityState={{ checked: isDone }}
-                      accessibilityLabel={habit.title}
+                      accessibilityLabel={tr(habit.title)}
                     >
                       <View style={[styles.habitCheck, isDone && styles.habitCheckDone]}>
                         {isDone ? (
@@ -1445,10 +1445,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                         ) : null}
                       </View>
                       <View style={styles.habitInfo}>
-                        <Text style={[styles.habitTitle, isDone && styles.habitTitleDone]}>
-                          {habit.title}
-                        </Text>
-                        <Text style={styles.habitSub}>{habit.sub}</Text>
+                        <LocalizedText style={[styles.habitTitle, isDone && styles.habitTitleDone]}>
+                          {tr(habit.title)}
+                        </LocalizedText>
+                        <LocalizedText style={styles.habitSub}>{tr(habit.sub)}</LocalizedText>
                       </View>
                       {habit.custom ? (
                         <TouchableOpacity
@@ -1456,7 +1456,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                           style={styles.habitRemove}
                           onPress={() => removeCustomHabit(habit.id)}
                           accessibilityRole="button"
-                          accessibilityLabel={`Remove ${habit.title}`}
+                          accessibilityLabel={`Remove ${tr(habit.title)}`}
                         >
                           <AppIcon name="close" size={12} color={SOFT} strokeWidth={1.8} />
                         </TouchableOpacity>
@@ -1466,9 +1466,9 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 })}
 
                 <View style={styles.habitAddBlock}>
-                  <Text style={styles.habitAddLabel}>ADD YOUR OWN</Text>
+                  <LocalizedText style={styles.habitAddLabel}>ADD YOUR OWN</LocalizedText>
                   <View style={styles.habitInputRow}>
-                    <TextInput
+                    <LocalizedTextInput
                       value={habitDraft}
                       onChangeText={setHabitDraft}
                       onSubmitEditing={() => addCustomHabit(habitDraft)}
@@ -1501,24 +1501,24 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     <View style={styles.habitChipRow}>
                       {habitSuggestions.map((suggestion) => (
                         <TouchableOpacity
-                          key={suggestion}
+                          key={tr(suggestion)}
                           activeOpacity={0.85}
                           style={styles.habitChip}
                           onPress={() => addCustomHabit(suggestion)}
                           accessibilityRole="button"
-                          accessibilityLabel={`Add ${suggestion}`}
+                          accessibilityLabel={`Add ${tr(suggestion)}`}
                         >
                           <AppIcon name="plus" size={10} color={TERRACOTTA} strokeWidth={2} />
-                          <Text style={styles.habitChipText}>{suggestion}</Text>
+                          <LocalizedText style={styles.habitChipText}>{tr(suggestion)}</LocalizedText>
                         </TouchableOpacity>
                       ))}
                     </View>
                   ) : null}
                 </View>
 
-                <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+                <LocalizedText style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
                   Come back tomorrow, gently.
-                </Text>
+                </LocalizedText>
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -1541,10 +1541,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 
               <View style={styles.habitsHeader}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={styles.habitsEyebrow}>A TRAIL OF RETURNS</Text>
-                  <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                  <LocalizedText style={styles.habitsEyebrow}>A TRAIL OF RETURNS</LocalizedText>
+                  <LocalizedText style={[styles.habitsTitle, { fontFamily: serif }]}>
                     Your gentle streak
-                  </Text>
+                  </LocalizedText>
                 </View>
                 <TouchableOpacity
                   style={styles.habitsCloseBtn}
@@ -1556,14 +1556,14 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.streakBig, { fontFamily: serif }]}>{streak}</Text>
-              <Text style={styles.streakBigLabel}>
+              <LocalizedText style={[styles.streakBig, { fontFamily: serif }]}>{streak}</LocalizedText>
+              <LocalizedText style={styles.streakBigLabel}>
                 {streak === 0
                   ? 'Not started yet. One honest check-in begins it.'
                   : streak === 1
                   ? 'day in a row. Beginning again counts.'
                   : 'days in a row. Not a score, just a trail.'}
-              </Text>
+              </LocalizedText>
 
               <View style={styles.weekRow}>
                 {week.map((day) => {
@@ -1588,20 +1588,20 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                           />
                         ) : null}
                       </View>
-                      <Text style={styles.weekLetter}>{day.letter}</Text>
+                      <LocalizedText style={styles.weekLetter}>{day.letter}</LocalizedText>
                     </View>
                   );
                 })}
               </View>
 
-              <Text style={styles.streakCopy}>
+              <LocalizedText style={styles.streakCopy}>
                 A streak here is not a number to protect. It is a small record of coming
                 back to yourself. Miss a day and nothing breaks.
-              </Text>
+              </LocalizedText>
 
-              <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+              <LocalizedText style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
                 Come back when you can, not because you owe it.
-              </Text>
+              </LocalizedText>
             </View>
           </View>
         </Modal>
@@ -1626,8 +1626,8 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 
               <View style={styles.habitsHeader}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={styles.habitsEyebrow}>ONLY YOURS TO READ</Text>
-                  <Text style={[styles.habitsTitle, { fontFamily: serif }]}>Your journal</Text>
+                  <LocalizedText style={styles.habitsEyebrow}>ONLY YOURS TO READ</LocalizedText>
+                  <LocalizedText style={[styles.habitsTitle, { fontFamily: serif }]}>Your journal</LocalizedText>
                 </View>
                 <TouchableOpacity
                   style={styles.habitsCloseBtn}
@@ -1640,16 +1640,16 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
               </View>
 
               {journalPrompt ? (
-                <Text style={[styles.journalPrompt, { fontFamily: serifItalic }]}>
+                <LocalizedText style={[styles.journalPrompt, { fontFamily: serifItalic }]}>
                   {journalPrompt}
-                </Text>
+                </LocalizedText>
               ) : (
-                <Text style={styles.habitsSub}>
+                <LocalizedText style={styles.habitsSub}>
                   No one else can see this. It stays on your device.
-                </Text>
+                </LocalizedText>
               )}
 
-              <TextInput
+              <LocalizedTextInput
                 style={styles.journalInput}
                 value={journalText}
                 onChangeText={setJournalText}
@@ -1667,27 +1667,27 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 accessibilityRole="button"
                 accessibilityLabel="Keep this line"
               >
-                <Text style={[styles.saveBtnText, { fontFamily: serif }]}>Keep this line</Text>
+                <LocalizedText style={[styles.saveBtnText, { fontFamily: serif }]}>Keep this line</LocalizedText>
                 <View style={styles.saveBtnCircle}>
                   <AppIcon name="check" size={14} color={CREAM} strokeWidth={2.2} />
                 </View>
               </TouchableOpacity>
 
-              {journalNote ? <Text style={styles.reminderNote}>{journalNote}</Text> : null}
+              {journalNote ? <LocalizedText style={styles.reminderNote}>{journalNote}</LocalizedText> : null}
 
               {journalEntries.length > 0 ? (
                 <View style={styles.journalLatest}>
-                  <Text style={styles.journalLabel}>LAST KEPT</Text>
-                  <Text style={styles.journalLatestText} numberOfLines={3}>
+                  <LocalizedText style={styles.journalLabel}>LAST KEPT</LocalizedText>
+                  <LocalizedText style={styles.journalLatestText} numberOfLines={3}>
                     {journalEntries[0].text}
-                  </Text>
+                  </LocalizedText>
                 </View>
               ) : null}
 
               {todayJournalEntry ? (
-                <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+                <LocalizedText style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
                   You have already written today. You can always write more.
-                </Text>
+                </LocalizedText>
               ) : null}
             </View>
           </KeyboardAvoidingView>
@@ -1713,10 +1713,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 
               <View style={styles.habitsHeader}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={styles.habitsEyebrow}>SMALL THINGS THAT HELD YOU</Text>
-                  <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                  <LocalizedText style={styles.habitsEyebrow}>SMALL THINGS THAT HELD YOU</LocalizedText>
+                  <LocalizedText style={[styles.habitsTitle, { fontFamily: serif }]}>
                     Gratitude jar
-                  </Text>
+                  </LocalizedText>
                 </View>
                 <TouchableOpacity
                   style={styles.habitsCloseBtn}
@@ -1728,11 +1728,11 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.habitsSub}>
+              <LocalizedText style={styles.habitsSub}>
                 One small thing. It does not have to be big to count.
-              </Text>
+              </LocalizedText>
 
-              <TextInput
+              <LocalizedTextInput
                 style={styles.journalInput}
                 value={gratitudeText}
                 onChangeText={setGratitudeText}
@@ -1750,24 +1750,24 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 accessibilityRole="button"
                 accessibilityLabel="Add to the gratitude jar"
               >
-                <Text style={[styles.saveBtnText, { fontFamily: serif }]}>Add to the jar</Text>
+                <LocalizedText style={[styles.saveBtnText, { fontFamily: serif }]}>Add to the jar</LocalizedText>
                 <View style={styles.saveBtnCircle}>
                   <AppIcon name="heart" size={14} color={CREAM} strokeWidth={1.8} />
                 </View>
               </TouchableOpacity>
 
-              {gratitudeNote ? <Text style={styles.reminderNote}>{gratitudeNote}</Text> : null}
+              {gratitudeNote ? <LocalizedText style={styles.reminderNote}>{gratitudeNote}</LocalizedText> : null}
 
               {gratitudeEntries.length > 0 ? (
                 <View style={styles.journalLatest}>
-                  <Text style={styles.journalLabel}>
+                  <LocalizedText style={styles.journalLabel}>
                     {gratitudeEntries.length} SMALL{' '}
                     {gratitudeEntries.length === 1 ? 'THANK' : 'THANKS'} KEPT
-                  </Text>
+                  </LocalizedText>
                   {gratitudeEntries.slice(0, 2).map((entry, index) => (
-                    <Text key={`${entry.date}-${index}`} style={styles.journalLatestText}>
+                    <LocalizedText key={`${entry.date}-${index}`} style={styles.journalLatestText}>
                       {entry.text}
-                    </Text>
+                    </LocalizedText>
                   ))}
                 </View>
               ) : null}
@@ -1792,10 +1792,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 
               <View style={styles.habitsHeader}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={styles.habitsEyebrow}>BEFORE THE DAY CLOSES</Text>
-                  <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                  <LocalizedText style={styles.habitsEyebrow}>BEFORE THE DAY CLOSES</LocalizedText>
+                  <LocalizedText style={[styles.habitsTitle, { fontFamily: serif }]}>
                     Wind down
-                  </Text>
+                  </LocalizedText>
                 </View>
                 <TouchableOpacity
                   style={styles.habitsCloseBtn}
@@ -1807,14 +1807,14 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.habitsSub}>
+              <LocalizedText style={styles.habitsSub}>
                 Not a routine to perfect. Just a softer landing into sleep.
-              </Text>
+              </LocalizedText>
 
               <View style={styles.habitsProgressRow}>
-                <Text style={styles.habitsProgressText}>
+                <LocalizedText style={styles.habitsProgressText}>
                   {keptWindDown} of {WIND_DOWN_STEPS.length} steps
-                </Text>
+                </LocalizedText>
                 <View style={styles.habitsProgressTrack}>
                   <View
                     style={[
@@ -1835,7 +1835,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     onPress={() => toggleWindDown(step.id)}
                     accessibilityRole="button"
                     accessibilityState={{ checked: isDone }}
-                    accessibilityLabel={step.title}
+                    accessibilityLabel={tr(step.title)}
                   >
                     <View style={[styles.habitCheck, isDone && styles.habitCheckDone]}>
                       {isDone ? (
@@ -1843,18 +1843,18 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                       ) : null}
                     </View>
                     <View style={styles.habitInfo}>
-                      <Text style={[styles.habitTitle, isDone && styles.habitTitleDone]}>
-                        {step.title}
-                      </Text>
-                      <Text style={styles.habitSub}>{step.sub}</Text>
+                      <LocalizedText style={[styles.habitTitle, isDone && styles.habitTitleDone]}>
+                        {tr(step.title)}
+                      </LocalizedText>
+                      <LocalizedText style={styles.habitSub}>{tr(step.sub)}</LocalizedText>
                     </View>
                   </TouchableOpacity>
                 );
               })}
 
-              <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+              <LocalizedText style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
                 Whatever is left undone can wait until morning.
-              </Text>
+              </LocalizedText>
             </View>
           </View>
         </Modal>
@@ -1876,10 +1876,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 
               <View style={styles.habitsHeader}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={styles.habitsEyebrow}>COME BACK TO NOW</Text>
-                  <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                  <LocalizedText style={styles.habitsEyebrow}>COME BACK TO NOW</LocalizedText>
+                  <LocalizedText style={[styles.habitsTitle, { fontFamily: serif }]}>
                     A grounding minute
-                  </Text>
+                  </LocalizedText>
                 </View>
                 <TouchableOpacity
                   style={styles.habitsCloseBtn}
@@ -1892,15 +1892,15 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
               </View>
 
               <View style={styles.groundingStage}>
-                <Text style={[styles.groundingCount, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.groundingCount, { fontFamily: serif }]}>
                   {GROUNDING_STEPS[groundStep].count}
-                </Text>
-                <Text style={[styles.groundingSense, { fontFamily: serif }]}>
-                  {GROUNDING_STEPS[groundStep].sense}
-                </Text>
-                <Text style={styles.groundingHint}>
-                  {GROUNDING_STEPS[groundStep].hint}
-                </Text>
+                </LocalizedText>
+                <LocalizedText style={[styles.groundingSense, { fontFamily: serif }]}>
+                  {tr(GROUNDING_STEPS[groundStep].sense)}
+                </LocalizedText>
+                <LocalizedText style={styles.groundingHint}>
+                  {tr(GROUNDING_STEPS[groundStep].hint)}
+                </LocalizedText>
               </View>
 
               <View style={styles.groundingDots}>
@@ -1931,19 +1931,19 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                   groundStep < GROUNDING_STEPS.length - 1 ? 'Next sense' : 'Finish grounding'
                 }
               >
-                <Text style={[styles.saveBtnText, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.saveBtnText, { fontFamily: serif }]}>
                   {groundStep < GROUNDING_STEPS.length - 1
                     ? 'Next sense'
                     : 'I am here'}
-                </Text>
+                </LocalizedText>
                 <View style={styles.saveBtnCircle}>
                   <AppIcon name="arrowRight" size={14} color={CREAM} strokeWidth={1.8} />
                 </View>
               </TouchableOpacity>
 
-              <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+              <LocalizedText style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
                 There is no wrong way to do this. Go at your own pace.
-              </Text>
+              </LocalizedText>
             </View>
           </View>
         </Modal>
@@ -1969,10 +1969,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
               >
                 <View style={styles.habitsHeader}>
                   <View style={{ flex: 1, paddingRight: 12 }}>
-                    <Text style={styles.habitsEyebrow}>A QUIET GAME</Text>
-                    <Text style={[styles.habitsTitle, { fontFamily: serif }]}>
+                    <LocalizedText style={styles.habitsEyebrow}>A QUIET GAME</LocalizedText>
+                    <LocalizedText style={[styles.habitsTitle, { fontFamily: serif }]}>
                       Grow a little garden
-                    </Text>
+                    </LocalizedText>
                   </View>
                   <TouchableOpacity
                     style={styles.habitsCloseBtn}
@@ -1984,10 +1984,10 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.habitsSub}>
+                <LocalizedText style={styles.habitsSub}>
                   Tap a patch of soil and watch it grow. There is no score, no timer, and
                   nothing here can be lost.
-                </Text>
+                </LocalizedText>
 
                 <View style={styles.gardenGrid}>
                   {garden.map((stage, index) => {
@@ -2008,7 +2008,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                           strokeWidth={1.5}
                         />
                         {stage === 0 ? (
-                          <Text style={styles.gardenTapHint}>tap</Text>
+                          <LocalizedText style={styles.gardenTapHint}>tap</LocalizedText>
                         ) : null}
                       </TouchableOpacity>
                     );
@@ -2016,13 +2016,13 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                 </View>
 
                 <View style={styles.gardenFootRow}>
-                  <Text style={styles.gardenProgress}>
+                  <LocalizedText style={styles.gardenProgress}>
                     {gardenBlooms > 0
                       ? `${gardenBlooms} of 9 in bloom`
                       : gardenGrowing > 0
                       ? `${gardenGrowing} of 9 growing`
                       : 'Nothing planted yet'}
-                  </Text>
+                  </LocalizedText>
                   <TouchableOpacity
                     activeOpacity={0.8}
                     style={styles.gardenReset}
@@ -2030,15 +2030,15 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
                     accessibilityRole="button"
                     accessibilityLabel="Start the garden again"
                   >
-                    <Text style={styles.gardenResetText}>Start again</Text>
+                    <LocalizedText style={styles.gardenResetText}>Start again</LocalizedText>
                   </TouchableOpacity>
                 </View>
 
-                <Text style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
+                <LocalizedText style={[styles.habitsFooter, { fontFamily: serifItalic }]}>
                   {gardenBlooms === 9
                     ? 'Every patch is in bloom. You did that, gently.'
                     : 'Stay as long as you like. The garden keeps waiting.'}
-                </Text>
+                </LocalizedText>
               </ScrollView>
             </View>
           </View>

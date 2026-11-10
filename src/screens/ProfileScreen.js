@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   Animated,
   Easing,
-  TextInput,
   Modal,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
+import LocalizedTextInput from '../components/LocalizedTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
@@ -25,10 +25,14 @@ import {
 } from '@expo-google-fonts/fraunces';
 import AppIcon from '../components/AppIcon';
 import { authApi, insightsApi, conversationsApi } from '../lib/api';
+import { useLanguage } from '../lib/i18n';
 import {
   isRemindersEnabled,
   enableReminders,
   disableReminders,
+  getReminderTimes,
+  saveReminderTimes,
+  DEFAULT_REMINDER_TIMES,
 } from '../lib/notifications';
 
 const INK = '#2A2033';
@@ -52,6 +56,29 @@ const MOOD_META = {
 
 function pad(value) {
   return String(value).padStart(2, '0');
+}
+
+const REMINDER_ROWS = [
+  { id: 'morning', label: 'Morning' },
+  { id: 'afternoon', label: 'Afternoon' },
+  { id: 'evening', label: 'Night' },
+];
+
+const TIME_SLOTS = (() => {
+  const slots = [];
+  for (let hour = 5; hour <= 23; hour += 1) {
+    slots.push({ hour, minute: 0 });
+    slots.push({ hour, minute: 30 });
+  }
+  return slots;
+})();
+
+function formatClock(time) {
+  const hour = time?.hour ?? 9;
+  const minute = time?.minute ?? 0;
+  const suffix = hour < 12 ? 'AM' : 'PM';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${pad(minute)} ${suffix}`;
 }
 
 function buildWeek(last7Days) {
@@ -138,6 +165,7 @@ function CompanionLight() {
 }
 
 export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, onOpenHome }) {
+  const { tr } = useLanguage();
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -164,6 +192,8 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
   const [remindersOn, setRemindersOn] = useState(false);
   const [reminderBusy, setReminderBusy] = useState(false);
   const [reminderNote, setReminderNote] = useState(null);
+  const [reminderTimes, setReminderTimes] = useState(DEFAULT_REMINDER_TIMES);
+  const [editingTime, setEditingTime] = useState(null);
 
   const reveal = useRef(new Animated.Value(0)).current;
 
@@ -208,7 +238,28 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
 
     try {
       setRemindersOn(await isRemindersEnabled());
+      setReminderTimes(await getReminderTimes());
     } catch (e) {}
+  };
+
+  const chooseReminderTime = async (slot) => {
+    if (!editingTime) return;
+    const next = { ...reminderTimes, [editingTime]: slot };
+    setReminderTimes(next);
+    setEditingTime(null);
+    try {
+      Haptics.selectionAsync();
+    } catch (e) {}
+
+    await saveReminderTimes(next);
+    if (remindersOn) {
+      const result = await enableReminders(next);
+      if (result.granted) {
+        setReminderNote('Your reminders will follow these times.');
+      }
+    } else {
+      setReminderNote('Saved. Turn reminders on and they will follow these times.');
+    }
   };
 
   const toggleReminders = async () => {
@@ -222,7 +273,7 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
         setRemindersOn(false);
         setReminderNote('Reminders are off. You can bring them back anytime.');
       } else {
-        const result = await enableReminders();
+        const result = await enableReminders(reminderTimes);
         if (result.granted) {
           setRemindersOn(true);
           setReminderNote('Three soft reminders are set for your day.');
@@ -338,23 +389,23 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
         >
           {/* Quiet brand line */}
           <View style={styles.topBar}>
-            <Text style={styles.wordmark}>SOLACE</Text>
+            <LocalizedText style={styles.wordmark}>SOLACE</LocalizedText>
             <View style={styles.topRule} />
-            <Text style={styles.topNote}>your space</Text>
+            <LocalizedText style={styles.topNote}>your space</LocalizedText>
           </View>
 
           {/* Hero */}
           <Animated.View style={[styles.hero, rise]}>
-            <Text style={styles.eyebrow}>{todayLine}</Text>
-            <Text style={[styles.title, { fontFamily: serif }]}>This is all</Text>
-            <Text style={[styles.titleAccent, { fontFamily: serifItalic }]}>yours.</Text>
-            <Text style={styles.subtitle}>No performance here. Just your own quiet corner.</Text>
+            <LocalizedText style={styles.eyebrow}>{todayLine}</LocalizedText>
+            <LocalizedText style={[styles.title, { fontFamily: serif }]}>This is all</LocalizedText>
+            <LocalizedText style={[styles.titleAccent, { fontFamily: serifItalic }]}>yours.</LocalizedText>
+            <LocalizedText style={styles.subtitle}>No performance here. Just your own quiet corner.</LocalizedText>
           </Animated.View>
 
           {loading ? (
             <View style={styles.loadingWrap}>
               <ActivityIndicator color={TERRACOTTA} />
-              <Text style={styles.loadingText}>Opening your space...</Text>
+              <LocalizedText style={styles.loadingText}>Opening your space...</LocalizedText>
             </View>
           ) : (
             <>
@@ -363,19 +414,19 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                 <CompanionLight />
 
                 <View style={styles.identityInfo}>
-                  <Text style={styles.identityLabel}>
+                  <LocalizedText style={styles.identityLabel}>
                     {user?.isGuest ? 'A GUEST, WELCOME TO STAY' : 'SIGNED IN AS'}
-                  </Text>
-                  <Text style={[styles.name, { fontFamily: serif }]} numberOfLines={1}>
+                  </LocalizedText>
+                  <LocalizedText style={[styles.name, { fontFamily: serif }]} numberOfLines={1}>
                     {displayName}
-                  </Text>
-                  <Text style={styles.identitySub} numberOfLines={1}>
+                  </LocalizedText>
+                  <LocalizedText style={styles.identitySub} numberOfLines={1}>
                     {user?.isGuest ? 'Nothing here is tied to an email' : user?.email}
-                  </Text>
+                  </LocalizedText>
                   {user?.createdAt ? (
-                    <Text style={styles.identitySince}>
+                    <LocalizedText style={styles.identitySince}>
                       With Solace since {memberSince(user.createdAt)}
-                    </Text>
+                    </LocalizedText>
                   ) : null}
                 </View>
 
@@ -390,29 +441,29 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                 </TouchableOpacity>
               </Animated.View>
 
-              {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+              {error ? <LocalizedText style={styles.errorBanner}>{error}</LocalizedText> : null}
 
               {/* Stats */}
               <Animated.View style={[styles.statsCard, rise]}>
                 <View style={styles.statCell}>
-                  <Text style={[styles.statValue, { fontFamily: serif }]}>
+                  <LocalizedText style={[styles.statValue, { fontFamily: serif }]}>
                     {insights?.streak ?? 0}
-                  </Text>
-                  <Text style={styles.statLabel}>DAY STREAK</Text>
+                  </LocalizedText>
+                  <LocalizedText style={styles.statLabel}>DAY STREAK</LocalizedText>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statCell}>
-                  <Text style={[styles.statValue, { fontFamily: serif }]}>
+                  <LocalizedText style={[styles.statValue, { fontFamily: serif }]}>
                     {insights?.totalCheckIns ?? 0}
-                  </Text>
-                  <Text style={styles.statLabel}>CHECK-INS</Text>
+                  </LocalizedText>
+                  <LocalizedText style={styles.statLabel}>CHECK-INS</LocalizedText>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statCell}>
-                  <Text style={[styles.statValue, { fontFamily: serif }]}>
+                  <LocalizedText style={[styles.statValue, { fontFamily: serif }]}>
                     {conversationCount}
-                  </Text>
-                  <Text style={styles.statLabel}>CONVERSATIONS</Text>
+                  </LocalizedText>
+                  <LocalizedText style={styles.statLabel}>CONVERSATIONS</LocalizedText>
                 </View>
               </Animated.View>
 
@@ -420,12 +471,12 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
               <Animated.View style={[styles.section, rise]}>
                 <View style={styles.sectionHead}>
                   <View>
-                    <Text style={[styles.sectionTitle, { fontFamily: serif }]}>This week</Text>
-                    <Text style={styles.sectionSub}>A gentle look at how your heart has been.</Text>
+                    <LocalizedText style={[styles.sectionTitle, { fontFamily: serif }]}>This week</LocalizedText>
+                    <LocalizedText style={styles.sectionSub}>A gentle look at how your heart has been.</LocalizedText>
                   </View>
-                  <Text style={styles.sectionAside}>
+                  <LocalizedText style={styles.sectionAside}>
                     {daysWithMood} of 7 days
-                  </Text>
+                  </LocalizedText>
                 </View>
 
                 <View style={styles.weekCard}>
@@ -433,9 +484,9 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                     const meta = day.mood ? MOOD_META[day.mood] : null;
                     return (
                       <View key={day.key} style={styles.weekDay}>
-                        <Text style={[styles.weekLetter, day.isToday && styles.weekLetterToday]}>
+                        <LocalizedText style={[styles.weekLetter, day.isToday && styles.weekLetterToday]}>
                           {day.letter}
-                        </Text>
+                        </LocalizedText>
                         <View
                           style={[
                             styles.weekDot,
@@ -450,29 +501,29 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                             <View style={styles.weekDotEmpty} />
                           )}
                         </View>
-                        <Text style={styles.weekName}>
-                          {day.isToday ? 'Today' : meta ? meta.label : ''}
-                        </Text>
+                        <LocalizedText style={styles.weekName}>
+                          {day.isToday ? tr('Today') : meta ? tr(meta.label) : ''}
+                        </LocalizedText>
                       </View>
                     );
                   })}
                 </View>
 
-                <Text style={styles.weekCaption}>
+                <LocalizedText style={styles.weekCaption}>
                   {daysWithMood === 0
                     ? 'No check-ins yet this week. There is no wrong time to begin.'
                     : daysWithMood >= 6
                     ? 'Almost every day, you stopped to notice yourself. That matters.'
                     : 'One honest moment is enough. The rest can wait.'}
-                </Text>
+                </LocalizedText>
               </Animated.View>
 
               {/* Mood mix */}
               <Animated.View style={[styles.section, rise]}>
                 <View style={styles.sectionHead}>
                   <View>
-                    <Text style={[styles.sectionTitle, { fontFamily: serif }]}>Your mood mix</Text>
-                    <Text style={styles.sectionSub}>Every feeling you have named so far.</Text>
+                    <LocalizedText style={[styles.sectionTitle, { fontFamily: serif }]}>Your mood mix</LocalizedText>
+                    <LocalizedText style={styles.sectionSub}>Every feeling you have named so far.</LocalizedText>
                   </View>
                 </View>
 
@@ -493,7 +544,7 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                         <View key={item.mood} style={styles.moodRow}>
                           <View style={styles.moodLabelWrap}>
                             <AppIcon name={meta.icon} size={13} color={meta.accent} strokeWidth={1.6} />
-                            <Text style={styles.moodLabel}>{meta.label}</Text>
+                            <LocalizedText style={styles.moodLabel}>{tr(meta.label)}</LocalizedText>
                           </View>
                           <View style={styles.moodBarTrack}>
                             <View
@@ -503,16 +554,16 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                               ]}
                             />
                           </View>
-                          <Text style={styles.moodCount}>{item.count}</Text>
+                          <LocalizedText style={styles.moodCount}>{item.count}</LocalizedText>
                         </View>
                       );
                     })}
                   </View>
                 ) : (
-                  <Text style={styles.emptyText}>
+                  <LocalizedText style={styles.emptyText}>
                     Check in with your heart on the home screen and your mood mix will appear
                     here.
-                  </Text>
+                  </LocalizedText>
                 )}
               </Animated.View>
 
@@ -520,15 +571,15 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
               <Animated.View style={[styles.mantraCard, rise]}>
                 <View style={styles.mantraHead}>
                   <AppIcon name="sparkles" size={12} color={TERRACOTTA} strokeWidth={1.6} />
-                  <Text style={styles.mantraLabel}>A LINE TO COME BACK TO</Text>
+                  <LocalizedText style={styles.mantraLabel}>A LINE TO COME BACK TO</LocalizedText>
                 </View>
-                <Text style={[styles.mantraText, { fontFamily: serifItalic }]}>
+                <LocalizedText style={[styles.mantraText, { fontFamily: serifItalic }]}>
                   {mantraText}
-                </Text>
+                </LocalizedText>
                 <View style={styles.mantraFoot}>
-                  <Text style={styles.mantraNote}>
+                  <LocalizedText style={styles.mantraNote}>
                     {isOwnMantra ? 'Your own words' : 'Today\'s affirmation'}
-                  </Text>
+                  </LocalizedText>
                   <TouchableOpacity
                     activeOpacity={0.8}
                     style={styles.mantraAction}
@@ -536,9 +587,9 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                     accessibilityRole="button"
                     accessibilityLabel="Write your own line"
                   >
-                    <Text style={styles.mantraActionText}>
+                    <LocalizedText style={styles.mantraActionText}>
                       {isOwnMantra ? 'Rewrite it' : 'Write your own'}
-                    </Text>
+                    </LocalizedText>
                     <AppIcon name="arrowRight" size={13} color={TERRACOTTA} strokeWidth={1.8} />
                   </TouchableOpacity>
                 </View>
@@ -546,8 +597,8 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
 
               {/* Quiet toolkit */}
               <Animated.View style={[styles.section, rise]}>
-                <Text style={[styles.sectionTitle, { fontFamily: serif }]}>Your quiet toolkit</Text>
-                <Text style={styles.sectionSub}>Ways back to yourself, whenever you need one.</Text>
+                <LocalizedText style={[styles.sectionTitle, { fontFamily: serif }]}>Your quiet toolkit</LocalizedText>
+                <LocalizedText style={styles.sectionSub}>Ways back to yourself, whenever you need one.</LocalizedText>
 
                 <TouchableOpacity
                   activeOpacity={0.9}
@@ -560,8 +611,8 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                     <AppIcon name="chat" size={18} color={TERRACOTTA} strokeWidth={1.5} />
                   </View>
                   <View style={styles.toolInfo}>
-                    <Text style={styles.toolTitle}>Talk it out</Text>
-                    <Text style={styles.toolSub}>Say it however it comes</Text>
+                    <LocalizedText style={styles.toolTitle}>Talk it out</LocalizedText>
+                    <LocalizedText style={styles.toolSub}>Say it however it comes</LocalizedText>
                   </View>
                   <AppIcon name="chevronRight" size={16} color="rgba(42, 32, 51, 0.22)" />
                 </TouchableOpacity>
@@ -577,8 +628,8 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                     <AppIcon name="wind" size={18} color={SAGE} strokeWidth={1.5} />
                   </View>
                   <View style={styles.toolInfo}>
-                    <Text style={styles.toolTitle}>Two minutes of breathing</Text>
-                    <Text style={styles.toolSub}>Slow the body, soften the mind</Text>
+                    <LocalizedText style={styles.toolTitle}>Two minutes of breathing</LocalizedText>
+                    <LocalizedText style={styles.toolSub}>Slow the body, soften the mind</LocalizedText>
                   </View>
                   <AppIcon name="chevronRight" size={16} color="rgba(42, 32, 51, 0.22)" />
                 </TouchableOpacity>
@@ -594,8 +645,8 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                     <AppIcon name="heart" size={18} color={LILAC} strokeWidth={1.5} />
                   </View>
                   <View style={styles.toolInfo}>
-                    <Text style={styles.toolTitle}>Today&apos;s check-in</Text>
-                    <Text style={styles.toolSub}>One honest tap, then let it be</Text>
+                    <LocalizedText style={styles.toolTitle}>Today&apos;s check-in</LocalizedText>
+                    <LocalizedText style={styles.toolSub}>One honest tap, then let it be</LocalizedText>
                   </View>
                   <AppIcon name="chevronRight" size={16} color="rgba(42, 32, 51, 0.22)" />
                 </TouchableOpacity>
@@ -603,12 +654,12 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
 
               {/* Gentle reminders */}
               <Animated.View style={[styles.section, rise]}>
-                <Text style={[styles.sectionTitle, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.sectionTitle, { fontFamily: serif }]}>
                   Gentle reminders
-                </Text>
-                <Text style={styles.sectionSub}>
+                </LocalizedText>
+                <LocalizedText style={styles.sectionSub}>
                   A soft nudge back to yourself, three times a day.
-                </Text>
+                </LocalizedText>
 
                 <View style={[styles.toolCard, styles.reminderCard]}>
                   <View
@@ -617,10 +668,10 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                     <AppIcon name="bell" size={18} color={TERRACOTTA} strokeWidth={1.5} />
                   </View>
                   <View style={styles.toolInfo}>
-                    <Text style={styles.toolTitle}>
+                    <LocalizedText style={styles.toolTitle}>
                       {remindersOn ? 'Reminders are on' : 'Reminders are off'}
-                    </Text>
-                    <Text style={styles.toolSub}>Morning, afternoon, and night</Text>
+                    </LocalizedText>
+                    <LocalizedText style={styles.toolSub}>Morning, afternoon, and night</LocalizedText>
                   </View>
                   <TouchableOpacity
                     activeOpacity={0.8}
@@ -638,10 +689,37 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.reminderTimes}>
-                  9:00 in the morning · 3:00 in the afternoon · 9:30 at night
-                </Text>
-                {reminderNote ? <Text style={styles.reminderNote}>{reminderNote}</Text> : null}
+                <LocalizedText style={styles.reminderHint}>
+                  Your own times. Tap one to change it.
+                </LocalizedText>
+
+                <View style={styles.reminderTimesRow}>
+                  {REMINDER_ROWS.map((row) => (
+                    <TouchableOpacity
+                      key={row.id}
+                      activeOpacity={0.85}
+                      style={[
+                        styles.timeChip,
+                        editingTime === row.id && styles.timeChipActive,
+                      ]}
+                      onPress={() => {
+                        try {
+                          Haptics.selectionAsync();
+                        } catch (e) {}
+                        setEditingTime(row.id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Change the ${tr(row.label).toLowerCase()} reminder time`}
+                    >
+                      <LocalizedText style={styles.timeChipLabel}>{tr(row.label)}</LocalizedText>
+                      <LocalizedText style={styles.timeChipValue}>
+                        {formatClock(reminderTimes[row.id])}
+                      </LocalizedText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {reminderNote ? <LocalizedText style={styles.reminderNote}>{reminderNote}</LocalizedText> : null}
               </Animated.View>
 
               {/* Privacy */}
@@ -650,11 +728,11 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                   <AppIcon name="lock" size={15} color={MUTED} strokeWidth={1.6} />
                 </View>
                 <View style={styles.privacyInfo}>
-                  <Text style={styles.privacyTitle}>Just between us</Text>
-                  <Text style={styles.privacySub}>
+                  <LocalizedText style={styles.privacyTitle}>Just between us</LocalizedText>
+                  <LocalizedText style={styles.privacySub}>
                     Your conversations belong to this account. Nothing is shared, sold or
                     shown to anyone else.
-                  </Text>
+                  </LocalizedText>
                 </View>
               </Animated.View>
 
@@ -671,12 +749,12 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                 accessibilityLabel="Sign out"
               >
                 <AppIcon name="logout" size={14} color="rgba(42, 32, 51, 0.45)" strokeWidth={1.6} />
-                <Text style={styles.signOutText}>Sign out of this space</Text>
+                <LocalizedText style={styles.signOutText}>Sign out of this space</LocalizedText>
               </TouchableOpacity>
 
-              <Text style={[styles.footerNote, { fontFamily: serifItalic }]}>
+              <LocalizedText style={[styles.footerNote, { fontFamily: serifItalic }]}>
                 You are not alone in this.
-              </Text>
+              </LocalizedText>
             </>
           )}
         </ScrollView>
@@ -696,19 +774,19 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
               />
               <View style={styles.grabber} />
 
-              <Text style={styles.editorLabel}>
+              <LocalizedText style={styles.editorLabel}>
                 {editing === 'name' ? 'YOUR NAME' : 'YOUR OWN WORDS'}
-              </Text>
-              <Text style={[styles.editorTitle, { fontFamily: serif }]}>
+              </LocalizedText>
+              <LocalizedText style={[styles.editorTitle, { fontFamily: serif }]}>
                 {editing === 'name' ? 'What should I call you?' : 'A line to come back to.'}
-              </Text>
-              <Text style={styles.editorSub}>
+              </LocalizedText>
+              <LocalizedText style={styles.editorSub}>
                 {editing === 'name'
                   ? 'However you would like to be met.'
                   : 'Something you want to remember on the harder days.'}
-              </Text>
+              </LocalizedText>
 
-              <TextInput
+              <LocalizedTextInput
                 value={draft}
                 onChangeText={(text) => {
                   setDraft(text);
@@ -724,7 +802,7 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                 onSubmitEditing={editing === 'name' ? saveEditor : undefined}
               />
 
-              {editError ? <Text style={styles.editorError}>{editError}</Text> : null}
+              {editError ? <LocalizedText style={styles.editorError}>{editError}</LocalizedText> : null}
 
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -734,9 +812,9 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                 accessibilityRole="button"
                 accessibilityLabel="Save"
               >
-                <Text style={[styles.editorSaveText, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.editorSaveText, { fontFamily: serif }]}>
                   {saving ? 'Saving...' : 'Keep this'}
-                </Text>
+                </LocalizedText>
                 <View style={styles.editorSaveCircle}>
                   <AppIcon name="arrowRight" size={14} color={CREAM} strokeWidth={1.8} />
                 </View>
@@ -748,10 +826,82 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
                 accessibilityRole="button"
                 accessibilityLabel="Cancel"
               >
-                <Text style={styles.editorCancelText}>Not now</Text>
+                <LocalizedText style={styles.editorCancelText}>Not now</LocalizedText>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      {/* Own time for each gentle reminder */}
+      <Modal
+        visible={editingTime !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingTime(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.timeSheet}>
+            <LinearGradient
+              colors={['#FDF9F3', '#F8F0E8', '#F1E8F5']}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.grabber} />
+
+            <View style={styles.timeSheetHead}>
+              <View style={styles.timeSheetIcon}>
+                <AppIcon name="clock" size={17} color={TERRACOTTA} strokeWidth={1.6} />
+              </View>
+              <View style={styles.timeSheetHeadText}>
+                <LocalizedText style={styles.editorLabel}>
+                  {REMINDER_ROWS.find((row) => row.id === editingTime)?.label?.toUpperCase() ||
+                    'REMINDER'}
+                </LocalizedText>
+                <LocalizedText style={[styles.editorTitle, { fontFamily: serif }]}>
+                  When should I find you?
+                </LocalizedText>
+              </View>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.timeList}
+            >
+              {TIME_SLOTS.map((slot) => {
+                const active =
+                  editingTime &&
+                  reminderTimes[editingTime]?.hour === slot.hour &&
+                  reminderTimes[editingTime]?.minute === slot.minute;
+                return (
+                  <TouchableOpacity
+                    key={`${slot.hour}-${slot.minute}`}
+                    activeOpacity={0.8}
+                    style={[styles.timeSlot, active && styles.timeSlotActive]}
+                    onPress={() => chooseReminderTime(slot)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: Boolean(active) }}
+                    accessibilityLabel={formatClock(slot)}
+                  >
+                    <LocalizedText style={[styles.timeSlotText, active && styles.timeSlotTextActive]}>
+                      {formatClock(slot)}
+                    </LocalizedText>
+                    {active ? (
+                      <AppIcon name="check" size={13} color={CREAM} strokeWidth={2} />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <TouchableOpacity
+              onPress={() => setEditingTime(null)}
+              style={styles.editorCancel}
+              accessibilityRole="button"
+              accessibilityLabel="Close time picker"
+            >
+              <LocalizedText style={styles.editorCancelText}>Not now</LocalizedText>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -1126,12 +1276,45 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   switchKnobOn: { alignSelf: 'flex-end' },
-  reminderTimes: {
+  reminderHint: {
     fontSize: 10.5,
     color: SOFT,
-    marginTop: 9,
+    marginTop: 10,
     marginLeft: 4,
     letterSpacing: 0.2,
+  },
+  reminderTimesRow: {
+    flexDirection: 'row',
+    marginTop: 9,
+    marginHorizontal: -3,
+  },
+  timeChip: {
+    flex: 1,
+    marginHorizontal: 3,
+    paddingVertical: 9,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 253, 248, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 102, 74, 0.16)',
+    alignItems: 'center',
+  },
+  timeChipActive: {
+    borderColor: TERRACOTTA,
+    backgroundColor: 'rgba(176, 102, 74, 0.08)',
+  },
+  timeChipLabel: {
+    fontSize: 8.5,
+    letterSpacing: 1.2,
+    fontWeight: '700',
+    color: SOFT,
+    textTransform: 'uppercase',
+  },
+  timeChipValue: {
+    fontSize: 13,
+    color: INK,
+    marginTop: 3,
+    fontWeight: '600',
   },
   reminderNote: {
     fontSize: 11,
@@ -1290,4 +1473,53 @@ const styles = StyleSheet.create({
   },
   editorCancel: { alignItems: 'center', paddingVertical: 14 },
   editorCancelText: { fontSize: 11.5, color: SOFT, letterSpacing: 0.2 },
+
+  timeSheet: {
+    width: '100%',
+    maxHeight: '78%',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 18,
+    overflow: 'hidden',
+  },
+  timeSheetHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  timeSheetIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(176, 102, 74, 0.10)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  timeSheetHeadText: { flex: 1 },
+  timeList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingBottom: 6,
+  },
+  timeSlot: {
+    width: '31.5%',
+    height: 42,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 253, 248, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(42, 32, 51, 0.08)',
+  },
+  timeSlotActive: {
+    backgroundColor: TERRACOTTA,
+    borderColor: TERRACOTTA,
+  },
+  timeSlotText: { fontSize: 12, color: INK },
+  timeSlotTextActive: { color: CREAM, fontWeight: '700', marginRight: 5 },
 });

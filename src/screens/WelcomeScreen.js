@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Animated,
@@ -12,6 +11,7 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -291,12 +291,12 @@ function HeavenlyBurstScene({ onComplete }) {
         <View style={styles.blessingIcon}>
           <AppIcon name="feather" size={26} color="#A78BFA" strokeWidth={1.4} />
         </View>
-        <Text style={styles.heavenBlessingTitle}>
+        <LocalizedText style={styles.heavenBlessingTitle}>
           You are safe. You are protected.
-        </Text>
-        <Text style={styles.heavenBlessingSub}>
+        </LocalizedText>
+        <LocalizedText style={styles.heavenBlessingSub}>
           Welcome to your peaceful haven
-        </Text>
+        </LocalizedText>
       </Animated.View>
     </Animated.View>
   );
@@ -443,9 +443,9 @@ export default function WelcomeScreen({ onGoHome }) {
           <Animated.View style={[styles.frame, { opacity: welcomeFade }]}>
             {/* Quiet wordmark */}
             <Animated.View style={[styles.topBar, rise(eyebrowIn, 10)]}>
-              <Text style={styles.wordmark}>SOLACE</Text>
+              <LocalizedText style={styles.wordmark}>SOLACE</LocalizedText>
               <View style={styles.topRule} />
-              <Text style={styles.topNote}>{t('quietPlace')}</Text>
+              <LocalizedText style={styles.topNote}>{t('quietPlace')}</LocalizedText>
 
               <TouchableOpacity
                 activeOpacity={0.8}
@@ -454,14 +454,14 @@ export default function WelcomeScreen({ onGoHome }) {
                 accessibilityRole="button"
                 accessibilityLabel="Change language"
               >
-                <Text style={styles.langPillText}>{language.toUpperCase()}</Text>
+                <LocalizedText style={styles.langPillText}>{language.toUpperCase()}</LocalizedText>
               </TouchableOpacity>
             </Animated.View>
 
             {/* The greeting */}
             <View style={styles.hero}>
               <Animated.View style={rise(eyebrowIn)}>
-                <Text style={styles.eyebrow}>{t('welcomeEyebrow')}</Text>
+                <LocalizedText style={styles.eyebrow}>{t('welcomeEyebrow')}</LocalizedText>
               </Animated.View>
 
               <Animated.Text
@@ -475,9 +475,9 @@ export default function WelcomeScreen({ onGoHome }) {
               </Animated.Text>
 
               <Animated.View style={rise(titleIn, 22)}>
-                <Text style={[styles.titleItalic, { fontFamily: serifItalic }]}>
+                <LocalizedText style={[styles.titleItalic, { fontFamily: serifItalic }]}>
                   {t('welcomeFriend')}
-                </Text>
+                </LocalizedText>
                 <View style={styles.underline} />
               </Animated.View>
 
@@ -517,12 +517,12 @@ export default function WelcomeScreen({ onGoHome }) {
                 </Animated.View>
               </TouchableOpacity>
 
-              <Text style={styles.orbHint}>{t('welcomeTap')}</Text>
+              <LocalizedText style={styles.orbHint}>{t('welcomeTap')}</LocalizedText>
             </Animated.View>
 
             {/* Quiet note */}
             <Animated.View style={[styles.bottom, rise(bottomIn, 14)]}>
-              <Text style={styles.footnote}>{t('welcomeFootnote')}</Text>
+              <LocalizedText style={styles.footnote}>{t('welcomeFootnote')}</LocalizedText>
             </Animated.View>
           </Animated.View>
           </ScrollView>
@@ -545,10 +545,10 @@ export default function WelcomeScreen({ onGoHome }) {
           />
           <View style={styles.langSheet}>
             <View style={styles.langGrabber} />
-            <Text style={[styles.langTitle, { fontFamily: serifSemiBold }]}>
+            <LocalizedText style={[styles.langTitle, { fontFamily: serifSemiBold }]}>
               {t('languageTitle')}
-            </Text>
-            <Text style={styles.langSub}>{t('languageSub')}</Text>
+            </LocalizedText>
+            <LocalizedText style={styles.langSub}>{t('languageSub')}</LocalizedText>
 
             {LANGUAGES.map((item) => {
               const active = item.code === language;
@@ -562,7 +562,7 @@ export default function WelcomeScreen({ onGoHome }) {
                     setLangOpen(false);
                   }}
                 >
-                  <Text style={styles.langNative}>{item.native}</Text>
+                  <LocalizedText style={styles.langNative}>{item.native}</LocalizedText>
                   {active ? (
                     <AppIcon name="check" size={15} color="#B0664A" strokeWidth={2} />
                   ) : null}

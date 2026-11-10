@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   FlatList,
   KeyboardAvoidingView,
@@ -12,6 +10,8 @@ import {
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
+import LocalizedText from '../components/LocalizedText';
+import LocalizedTextInput from '../components/LocalizedTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
@@ -29,7 +29,7 @@ import {
   conversationsApi,
   formatServerTime,
 } from '../lib/api';
-import { getLanguage } from '../lib/i18n';
+import { getLanguage, useLanguage } from '../lib/i18n';
 
 const INK = '#2A2033';
 const MUTED = 'rgba(42, 32, 51, 0.62)';
@@ -88,6 +88,7 @@ function mapMessage(message) {
 }
 
 export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDraftConsumed }) {
+  const { tr } = useLanguage();
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -315,21 +316,21 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
             item.isError && styles.errorBubble,
           ]}
         >
-          {!isUser ? <Text style={styles.solaceLabel}>SOLACE</Text> : null}
+          {!isUser ? <LocalizedText style={styles.solaceLabel}>SOLACE</LocalizedText> : null}
 
-          <Text style={[styles.messageText, isUser ? styles.userText : styles.solaceText]}>
+          <LocalizedText style={[styles.messageText, isUser ? styles.userText : styles.solaceText]}>
             {item.text}
-          </Text>
+          </LocalizedText>
 
           {item.affirmation ? (
             <View style={styles.affirmationCard}>
               <View style={styles.affirmationLabelRow}>
                 <AppIcon name="sparkles" size={11} color={TERRACOTTA} strokeWidth={1.5} />
-                <Text style={styles.affirmationLabel}>A LITTLE AFFIRMATION</Text>
+                <LocalizedText style={styles.affirmationLabel}>A LITTLE AFFIRMATION</LocalizedText>
               </View>
-              <Text style={[styles.affirmationText, { fontFamily: serifItalic }]}>
+              <LocalizedText style={[styles.affirmationText, { fontFamily: serifItalic }]}>
                 {item.affirmation}
-              </Text>
+              </LocalizedText>
             </View>
           ) : null}
 
@@ -342,19 +343,19 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
               accessibilityLabel="Start a breathing session"
             >
               <AppIcon name="wind" size={14} color={SAGE} strokeWidth={1.6} />
-              <Text style={styles.inlineActivityText}>Two minutes of breathing</Text>
+              <LocalizedText style={styles.inlineActivityText}>Two minutes of breathing</LocalizedText>
               <AppIcon name="arrowRight" size={13} color={SAGE} strokeWidth={1.8} />
             </TouchableOpacity>
           )}
 
-          <Text
+          <LocalizedText
             style={[
               styles.timestamp,
               isUser ? styles.userTimestamp : styles.solaceTimestamp,
             ]}
           >
             {item.timestamp}
-          </Text>
+          </LocalizedText>
         </View>
       </View>
     );
@@ -378,7 +379,7 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
               accessibilityLabel="Back to Haven"
             >
               <AppIcon name="arrowLeft" size={14} color={TERRACOTTA} strokeWidth={1.8} />
-              <Text style={styles.backText}>Haven</Text>
+              <LocalizedText style={styles.backText}>Haven</LocalizedText>
             </TouchableOpacity>
 
             <View style={styles.headerCenter}>
@@ -391,8 +392,8 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
                 <AppIcon name="feather" size={13} color="#FFFBF6" strokeWidth={1.2} />
               </LinearGradient>
               <View>
-                <Text style={[styles.headerTitle, { fontFamily: serif }]}>Solace</Text>
-                <Text style={styles.headerStatus}>here with you</Text>
+                <LocalizedText style={[styles.headerTitle, { fontFamily: serif }]}>Solace</LocalizedText>
+                <LocalizedText style={styles.headerStatus}>here with you</LocalizedText>
               </View>
             </View>
 
@@ -417,7 +418,7 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
                   <AppIcon name="feather" size={20} color="#FFFBF6" strokeWidth={1.1} />
                 </View>
                 <ActivityIndicator color={TERRACOTTA} style={{ marginTop: 18 }} />
-                <Text style={styles.loadingText}>Opening a quiet space...</Text>
+                <LocalizedText style={styles.loadingText}>Opening a quiet space...</LocalizedText>
               </View>
             ) : (
               <FlatList
@@ -439,9 +440,9 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
                 <View style={styles.miniOrb}>
                   <AppIcon name="feather" size={11} color="#FFFBF6" strokeWidth={1.2} />
                 </View>
-                <Text style={[styles.typingText, { fontFamily: serifItalic }]}>
+                <LocalizedText style={[styles.typingText, { fontFamily: serifItalic }]}>
                   Solace is here, thinking gently...
-                </Text>
+                </LocalizedText>
               </View>
             ) : null}
 
@@ -454,7 +455,7 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
                     style={styles.promptChip}
                     onPress={() => handleSend(item)}
                   >
-                    <Text style={styles.promptChipText}>{item}</Text>
+                    <LocalizedText style={styles.promptChipText}>{tr(item)}</LocalizedText>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -466,12 +467,12 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
                 activeOpacity={0.8}
                 onPress={() => setError(null)}
               >
-                <Text style={styles.errorBannerText}>{error} (tap to dismiss)</Text>
+                <LocalizedText style={styles.errorBannerText}>{error} (tap to dismiss)</LocalizedText>
               </TouchableOpacity>
             ) : null}
 
             <View style={styles.inputRow}>
-              <TextInput
+              <LocalizedTextInput
                 style={styles.textInput}
                 placeholder="Say it however it comes..."
                 placeholderTextColor="rgba(42, 32, 51, 0.28)"
@@ -528,10 +529,10 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
 
             <View style={styles.historyHeader}>
               <View>
-                <Text style={styles.historyEyebrow}>KEPT GENTLY</Text>
-                <Text style={[styles.historyTitle, { fontFamily: serif }]}>
+                <LocalizedText style={styles.historyEyebrow}>KEPT GENTLY</LocalizedText>
+                <LocalizedText style={[styles.historyTitle, { fontFamily: serif }]}>
                   Your conversations
-                </Text>
+                </LocalizedText>
               </View>
               <TouchableOpacity
                 style={styles.historyCloseBtn}
@@ -552,9 +553,9 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
             >
               <View style={styles.newChatLeft}>
                 <AppIcon name="plus" size={14} color={CREAM} strokeWidth={2} />
-                <Text style={[styles.newChatText, { fontFamily: serif }]}>
+                <LocalizedText style={[styles.newChatText, { fontFamily: serif }]}>
                   Start a new conversation
-                </Text>
+                </LocalizedText>
               </View>
               <View style={styles.newChatCircle}>
                 <AppIcon name="arrowRight" size={13} color={CREAM} strokeWidth={1.8} />
@@ -570,9 +571,9 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
                 data={conversations}
                 keyExtractor={(item) => String(item.id)}
                 ListEmptyComponent={
-                  <Text style={[styles.historyEmpty, { fontFamily: serifItalic }]}>
+                  <LocalizedText style={[styles.historyEmpty, { fontFamily: serifItalic }]}>
                     Nothing here yet. Say one small thing, and I will keep it for you.
-                  </Text>
+                  </LocalizedText>
                 }
                 contentContainerStyle={{ paddingBottom: 12 }}
                 renderItem={({ item }) => (
@@ -587,13 +588,13 @@ export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDr
                       onPress={() => openConversation(item.id)}
                       activeOpacity={0.8}
                     >
-                      <Text style={styles.historyItemTitle} numberOfLines={1}>
+                      <LocalizedText style={styles.historyItemTitle} numberOfLines={1}>
                         {item.title}
-                      </Text>
-                      <Text style={styles.historyItemMeta} numberOfLines={1}>
+                      </LocalizedText>
+                      <LocalizedText style={styles.historyItemMeta} numberOfLines={1}>
                         {item.message_count} message{item.message_count === 1 ? '' : 's'} ·{' '}
                         {formatServerTime(item.updated_at)}
-                      </Text>
+                      </LocalizedText>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.historyDeleteBtn}

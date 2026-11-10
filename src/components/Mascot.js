@@ -1,5 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, TouchableOpacity, Text } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+} from 'react-native';
+import LocalizedText from '../components/LocalizedText';
 import Svg, { Circle, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';

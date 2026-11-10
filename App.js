@@ -3,11 +3,11 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Text,
   SafeAreaView,
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import LocalizedText from './src/components/LocalizedText';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -140,8 +140,8 @@ function AppShell() {
             <AppIcon name="feather" size={24} color="#FFFBF6" strokeWidth={1.1} />
           </LinearGradient>
         </View>
-        <Text style={styles.splashWordmark}>SOLACE</Text>
-        <Text style={styles.splashSub}>a quiet place</Text>
+        <LocalizedText style={styles.splashWordmark}>SOLACE</LocalizedText>
+        <LocalizedText style={styles.splashSub}>a quiet place</LocalizedText>
         <ActivityIndicator color="#B0664A" style={{ marginTop: 26 }} />
       </LinearGradient>
     );
@@ -228,14 +228,14 @@ function AppShell() {
                   color={currentScreen === 'home' ? '#B0664A' : 'rgba(42, 32, 51, 0.35)'}
                   strokeWidth={1.7}
                 />
-                <Text
+                <LocalizedText
                   style={[
                     styles.navLabel,
                     currentScreen === 'home' && styles.navLabelActive,
                   ]}
                 >
                   {t('navHome')}
-                </Text>
+                </LocalizedText>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -248,14 +248,14 @@ function AppShell() {
                   color={currentScreen === 'chat' ? '#B0664A' : 'rgba(42, 32, 51, 0.35)'}
                   strokeWidth={1.7}
                 />
-                <Text
+                <LocalizedText
                   style={[
                     styles.navLabel,
                     currentScreen === 'chat' && styles.navLabelActive,
                   ]}
                 >
                   Solace AI
-                </Text>
+                </LocalizedText>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -271,14 +271,14 @@ function AppShell() {
                   color={currentScreen === 'breathing' ? '#B0664A' : 'rgba(42, 32, 51, 0.35)'}
                   strokeWidth={1.7}
                 />
-                <Text
+                <LocalizedText
                   style={[
                     styles.navLabel,
                     currentScreen === 'breathing' && styles.navLabelActive,
                   ]}
                 >
                   {t('navBreathe')}
-                </Text>
+                </LocalizedText>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -291,14 +291,14 @@ function AppShell() {
                   color={currentScreen === 'profile' ? '#B0664A' : 'rgba(42, 32, 51, 0.35)'}
                   strokeWidth={1.7}
                 />
-                <Text
+                <LocalizedText
                   style={[
                     styles.navLabel,
                     currentScreen === 'profile' && styles.navLabelActive,
                   ]}
                 >
                   {t('navYou')}
-                </Text>
+                </LocalizedText>
               </TouchableOpacity>
             </View>
           </SafeAreaView>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PHRASES from './phrases';
 
 export const LANGUAGES = [
   { code: 'en', native: 'English' },
@@ -161,10 +162,28 @@ const LanguageContext = createContext({
   language: 'en',
   setLanguage: () => {},
   t: (key) => STRINGS.en[key] ?? key,
+  tr: (text) => text,
 });
 
 // Non-hook access for the API layer.
 let currentLanguage = 'en';
+
+/**
+ * Looks up a whole English UI phrase in the generated phrase table.
+ * Unknown strings fall back to English, so the app always stays readable.
+ */
+export function translatePhrase(text, lang = currentLanguage) {
+  if (typeof text !== 'string' || !text.trim() || lang === 'en') return text;
+  const table = PHRASES[lang];
+  if (!table) return text;
+  return table[text.trim()] || text;
+}
+
+// Non-hook translate for code that runs outside a component.
+export function trNow(text) {
+  return translatePhrase(text, currentLanguage);
+}
+
 export function getLanguage() {
   return currentLanguage;
 }
@@ -204,6 +223,7 @@ export function LanguageProvider({ children }) {
       language,
       setLanguage,
       t: (key) => STRINGS[language]?.[key] ?? STRINGS.en[key] ?? key,
+      tr: (text) => translatePhrase(text, language),
     }),
     [language]
   );
