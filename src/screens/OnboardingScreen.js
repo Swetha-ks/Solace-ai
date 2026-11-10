@@ -271,6 +271,7 @@ function Slide({
   isLast,
   height,
 }) {
+  const { tr } = useLanguage();
   const reveal = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
