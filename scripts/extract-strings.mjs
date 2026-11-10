@@ -112,6 +112,18 @@ for (const file of files) {
         if (k3) found.get(k3).add(rel);
       }
     },
+    VariableDeclarator(nodePath) {
+      const id = nodePath.node.id;
+      if (id?.type !== 'Identifier' || !/^[A-Z][A-Z0-9_]+$/.test(id.name)) return;
+      const init = nodePath.node.init;
+      if (init?.type !== 'ArrayExpression') return;
+      init.elements.forEach((element) => {
+        if (element?.type === 'StringLiteral') {
+          const k4 = add(element.value);
+          if (k4) found.get(k4).add(rel);
+        }
+      });
+    },
     CallExpression(nodePath) {
       const callee = nodePath.node.callee;
       const isAlert =
