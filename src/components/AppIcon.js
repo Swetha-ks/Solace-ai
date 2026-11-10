@@ -34,6 +34,8 @@ import {
   Settings,
   Circle,
   Check,
+  Bird,
+  Mail,
 } from 'lucide-react-native';
 
 /**
@@ -77,6 +79,8 @@ const ICONS = {
   settings: Settings,
   circle: Circle,
   check: Check,
+  bird: Bird,
+  mail: Mail,
 };
 
 export default function AppIcon({

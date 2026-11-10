@@ -686,7 +686,7 @@ export default function ProfileScreen({ onSignOut, onOpenChat, onOpenBreathing, 
       <Modal visible={editing !== null} transparent animationType="fade" onRequestClose={closeEditor}>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior="padding"
             style={styles.modalAlign}
           >
             <View style={styles.editorSheet}>

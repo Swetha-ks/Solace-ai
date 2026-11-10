@@ -10,7 +10,6 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
-  Platform,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -186,15 +185,19 @@ const GROUNDING_STEPS = [
   { count: '1', sense: 'thing you can taste', hint: 'Even the last sip of water.' },
 ];
 
-const DAILY_QUESTIONS = [
-  'What is one thing you needed today that you did not ask for?',
-  'Where in your body are you holding the day?',
-  'What would you say to a friend who felt the way you feel now?',
-  'What is one small thing that went right today?',
-  'What are you ready to put down for tonight?',
-  'Who or what made you feel a little less alone this week?',
-  'What does rest look like for you right now?',
+const TINY_ACTIONS = [
+  'Look out of the nearest window for twenty seconds. Let your eyes go far.',
+  'Drink a glass of water, slowly, all the way down.',
+  'Put both feet on the floor and press down. Feel the ground hold you.',
+  'Stretch your arms overhead, then let them fall. Let your shoulders drop.',
+  'Send one kind message to someone you have not spoken to in a while.',
+  'Step outside, or open a window, and take three slow breaths of fresh air.',
+  'Tidy one small square of your space. Just one.',
+  'Put your phone down for one minute and listen to the room.',
+  'Name three things within reach that you are glad exist.',
+  'Warm your hands together, then rest them over your eyes for ten seconds.',
 ];
+
 
 function CompanionLight({ onPress, size = 62 }) {
   const breath = useRef(new Animated.Value(0)).current;
@@ -261,7 +264,7 @@ function CompanionLight({ onPress, size = 62 }) {
   );
 }
 
-export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
+export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraft, user }) {
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -285,6 +288,8 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const [habitDraft, setHabitDraft] = useState('');
   const [gameOpen, setGameOpen] = useState(false);
   const [garden, setGarden] = useState(Array(9).fill(0));
+  const [tinyIndex, setTinyIndex] = useState(0);
+  const [quickChatText, setQuickChatText] = useState('');
 
   // Private journal, gratitude, wind-down and grounding all keep their own state.
   const [journalOpen, setJournalOpen] = useState(false);
@@ -305,21 +310,91 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const [groundStep, setGroundStep] = useState(0);
 
   const reveal = useRef(new Animated.Value(0)).current;
+  const lift = useRef(new Animated.Value(0)).current;
+  const cardUnfold = useRef(new Animated.Value(0)).current;
+  const birdFly = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef(null);
 
   useEffect(() => {
-    Animated.timing(reveal, {
-      toValue: 1,
-      duration: 820,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.timing(reveal, {
+        toValue: 1,
+        duration: 360,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(lift, {
+        toValue: 1,
+        speed: 18,
+        bounciness: 6,
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.delay(80),
+        Animated.spring(cardUnfold, {
+          toValue: 1,
+          speed: 14,
+          bounciness: 9,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.delay(220),
+        Animated.timing(birdFly, {
+          toValue: 1,
+          duration: 1350,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
   }, []);
 
   const rise = {
     opacity: reveal,
     transform: [
       {
-        translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }),
+        translateY: lift.interpolate({ inputRange: [0, 1], outputRange: [26, 0] }),
+      },
+    ],
+  };
+
+  const unfold = {
+    opacity: cardUnfold.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    }),
+    transform: [
+      { translateY: cardUnfold.interpolate({ inputRange: [0, 1], outputRange: [26, 0] }) },
+      { scaleY: cardUnfold.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] }) },
+      { scaleX: cardUnfold.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+    ],
+  };
+
+  const birdStyle = {
+    opacity: birdFly.interpolate({
+      inputRange: [0, 0.1, 0.82, 1],
+      outputRange: [0, 1, 1, 0],
+    }),
+    transform: [
+      {
+        translateX: birdFly.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [190, 40, -90],
+        }),
+      },
+      {
+        translateY: birdFly.interpolate({
+          inputRange: [0, 0.28, 0.6, 1],
+          outputRange: [-18, -44, -16, -34],
+        }),
+      },
+      {
+        rotate: birdFly.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: ['-10deg', '3deg', '-12deg'],
+        }),
       },
     ],
   };
@@ -478,7 +553,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
   const allHabits = [...HABITS, ...customHabits];
   const keptHabits = allHabits.filter((h) => habitsDone.includes(h.id)).length;
   const activeMood = MOODS.find((m) => m.id === selectedMood) || null;
-  const dailyQuestion = DAILY_QUESTIONS[new Date().getDate() % DAILY_QUESTIONS.length];
+  const tinyAction = TINY_ACTIONS[tinyIndex % TINY_ACTIONS.length];
   const habitSuggestions = HABIT_SUGGESTIONS.filter(
     (suggestion) =>
       !allHabits.some((habit) => habit.title.toLowerCase() === suggestion.toLowerCase()) &&
@@ -582,6 +657,24 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
     else onOpenChat();
   };
 
+  const shuffleTiny = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    setTinyIndex((i) => (i + 1) % TINY_ACTIONS.length);
+  };
+
+  const sendQuickChat = () => {
+    const text = quickChatText.trim();
+    setQuickChatText('');
+    if (!text) {
+      onOpenChat();
+      return;
+    }
+    if (onOpenChatDraft) onOpenChatDraft(text);
+    else onOpenChat();
+  };
+
   const now = new Date();
   const week = buildWeek(weekMoods);
   const moodAccent = (id) => MOODS.find((m) => m.id === id)?.accent || 'rgba(42, 32, 51, 0.14)';
@@ -610,7 +703,9 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.mobilePhoneFrame}>
           <ScrollView
+            ref={scrollRef}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.scrollContent}
           >
             {/* Quiet header */}
@@ -621,26 +716,23 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
                 <Text style={styles.topNote}>{t('quietPlace')}</Text>
               </View>
 
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={styles.streakPill}
-                onPress={() => setStreakOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Your gentle streak"
-              >
-                <AppIcon name="streak" size={11} color={TERRACOTTA} strokeWidth={1.6} />
-                <Text style={styles.streakText}>
-                  {streak > 0
-                    ? streak === 1
-                      ? 'Day 1'
-                      : `${streak} days`
-                    : 'A new start'}
-                </Text>
-              </TouchableOpacity>
+              {streak >= 2 ? (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.streakPill}
+                  onPress={() => setStreakOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Your gentle streak"
+                >
+                  <AppIcon name="streak" size={11} color={TERRACOTTA} strokeWidth={1.6} />
+                  <Text style={styles.streakText}>{`${streak} days`}</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
 
             {/* Companion hero */}
             <Animated.View style={[styles.heroCardWrap, rise]}>
+              <Animated.View style={[styles.heroUnfold, unfold]}>
               <LinearGradient
                 colors={['#FFF6EC', '#FAE5D8', '#F2E5F7']}
                 start={{ x: 0, y: 0 }}
@@ -693,29 +785,6 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
                   {t('homeSub')}
                 </Text>
 
-                <View style={styles.heroChips}>
-                  <View style={styles.heroChip}>
-                    <AppIcon name="streak" size={12} color={TERRACOTTA} strokeWidth={1.7} />
-                    <Text style={styles.heroChipText}>
-                      {streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : 'Day one'}
-                    </Text>
-                  </View>
-                  <View style={styles.heroChip}>
-                    <AppIcon name="sprout" size={12} color={LILAC} strokeWidth={1.7} />
-                    <Text style={styles.heroChipText}>
-                      {keptHabits > 0 ? `${keptHabits} kept` : 'No habits yet'}
-                    </Text>
-                  </View>
-                  <View style={styles.heroChip}>
-                    <AppIcon name="pen" size={12} color={SAGE} strokeWidth={1.7} />
-                    <Text style={styles.heroChipText}>
-                      {journalEntries.length > 0
-                        ? `${journalEntries.length} lines`
-                        : 'Blank page'}
-                    </Text>
-                  </View>
-                </View>
-
                 <View style={styles.heroActions}>
                   <TouchableOpacity
                     activeOpacity={0.9}
@@ -742,9 +811,15 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
-            </Animated.View>
+              </Animated.View>
 
-            {/* Mood check-in */}
+              <Animated.View pointerEvents="none" style={[styles.messenger, birdStyle]}>
+                <View style={styles.messengerEnvelope}>
+                  <AppIcon name="mail" size={11} color={TERRACOTTA} strokeWidth={1.7} />
+                </View>
+                <AppIcon name="bird" size={26} color={TERRACOTTA} strokeWidth={1.4} />
+              </Animated.View>
+            </Animated.View>
             <Animated.View style={[styles.section, rise]}>
               <View style={styles.sectionHead}>
                 <View>
@@ -897,44 +972,39 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
               </Animated.View>
             ) : null}
 
-            {/* A small question for today */}
-            <Animated.View style={[styles.questionWrap, rise]}>
+            {/* One small thing */}
+            <Animated.View style={[styles.tinyWrap, rise]}>
               <LinearGradient
-                colors={['#F0E8F9', '#E7DEF5', '#F7EAF0']}
+                colors={['#FDF3E7', '#F6E6D4', '#EFE6F7']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.questionCard}
+                style={styles.tinyCard}
               >
-                <Text pointerEvents="none" style={[styles.questionMark, { fontFamily: serif }]}>
-                  ?
-                </Text>
+                <View pointerEvents="none" style={styles.tinyGlow} />
 
-                <View style={styles.questionTopRow}>
-                  <View style={styles.questionBadge}>
-                    <AppIcon name="sparkles" size={11} color={LILAC} strokeWidth={1.7} />
-                    <Text style={styles.questionEyebrow}>A SMALL QUESTION FOR TODAY</Text>
+                <View style={styles.tinyTopRow}>
+                  <View style={styles.tinyBadge}>
+                    <AppIcon name="sparkles" size={11} color={TERRACOTTA} strokeWidth={1.7} />
+                    <Text style={styles.tinyEyebrow}>ONE SMALL THING, RIGHT NOW</Text>
                   </View>
-                  <Text style={styles.questionAside}>JUST FOR YOU</Text>
+                  <Text style={styles.tinyAside}>NOT A TASK</Text>
                 </View>
 
-                <Text style={[styles.questionText, { fontFamily: serifItalic }]}>
-                  {dailyQuestion}
-                </Text>
+                <Text style={[styles.tinyText, { fontFamily: serifItalic }]}>{tinyAction}</Text>
 
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  style={styles.questionCta}
-                  onPress={() => openJournal(dailyQuestion)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Answer privately in your journal"
-                >
-                  <Text style={[styles.questionCtaText, { fontFamily: serif }]}>
-                    Answer privately
-                  </Text>
-                  <View style={styles.questionCtaCircle}>
-                    <AppIcon name="pen" size={13} color={CREAM} strokeWidth={1.8} />
-                  </View>
-                </TouchableOpacity>
+                <View style={styles.tinyFootRow}>
+                  <Text style={styles.tinyFoot}>Nothing to finish. Nothing to keep.</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.tinyShuffle}
+                    onPress={shuffleTiny}
+                    accessibilityRole="button"
+                    accessibilityLabel="Show another small thing"
+                  >
+                    <AppIcon name="sparkles" size={12} color={CREAM} strokeWidth={1.8} />
+                    <Text style={styles.tinyShuffleText}>Another</Text>
+                  </TouchableOpacity>
+                </View>
               </LinearGradient>
             </Animated.View>
 
@@ -1169,6 +1239,48 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
                 </TouchableOpacity>
               </View>
 
+              {/* Quick chat before the day closes */}
+              <View style={styles.quickChatCard}>
+                <View style={styles.quickChatHead}>
+                  <View style={styles.quickChatOrb}>
+                    <AppIcon name="chat" size={15} color={TERRACOTTA} strokeWidth={1.6} />
+                  </View>
+                  <View style={styles.quickChatHeadText}>
+                    <Text style={styles.quickChatEyebrow}>IF IT IS STILL LOUD</Text>
+                    <Text style={[styles.quickChatTitle, { fontFamily: serif }]}>
+                      Tell me one line.
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.quickChatRow}>
+                  <TextInput
+                    value={quickChatText}
+                    onChangeText={setQuickChatText}
+                    placeholder="Say it however it comes..."
+                    placeholderTextColor="rgba(42, 32, 51, 0.3)"
+                    style={styles.quickChatInput}
+                    returnKeyType="send"
+                    onSubmitEditing={sendQuickChat}
+                    onFocus={() => {
+                      setTimeout(() => {
+                        scrollRef.current?.scrollToEnd({ animated: true });
+                      }, 260);
+                    }}
+                    maxLength={300}
+                  />
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.quickChatSend}
+                    onPress={sendQuickChat}
+                    accessibilityRole="button"
+                    accessibilityLabel="Continue this in chat"
+                  >
+                    <AppIcon name="arrowUp" size={15} color={CREAM} strokeWidth={2.1} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               {/* Evening wind-down — featured */}
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -1229,7 +1341,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
         >
           <KeyboardAvoidingView
             style={styles.habitsOverlay}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior="padding"
           >
             <View style={styles.habitsSheet}>
               <LinearGradient
@@ -1472,7 +1584,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
         >
           <KeyboardAvoidingView
             style={styles.habitsOverlay}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior="padding"
           >
             <View style={styles.habitsSheet}>
               <LinearGradient
@@ -1559,7 +1671,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, user }) {
         >
           <KeyboardAvoidingView
             style={styles.habitsOverlay}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior="padding"
           >
             <View style={styles.habitsSheet}>
               <LinearGradient
@@ -2034,6 +2146,28 @@ const styles = StyleSheet.create({
     shadowRadius: 28,
     elevation: 5,
   },
+  heroUnfold: {
+    borderRadius: 30,
+    overflow: 'hidden',
+  },
+  messenger: {
+    position: 'absolute',
+    top: -32,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  messengerEnvelope: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 102, 74, 0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 2,
+  },
   heroCard: {
     borderRadius: 30,
     borderWidth: 1,
@@ -2206,6 +2340,149 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: TERRACOTTA,
     letterSpacing: 0.2,
+  },
+
+  // One small thing
+  tinyWrap: {
+    marginBottom: 26,
+  },
+  tinyCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.92)',
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    overflow: 'hidden',
+    shadowColor: '#B0664A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 22,
+    elevation: 2,
+  },
+  tinyGlow: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    top: -110,
+    right: -60,
+    backgroundColor: 'rgba(196, 167, 232, 0.22)',
+  },
+  tinyTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  tinyBadge: { flexDirection: 'row', alignItems: 'center' },
+  tinyEyebrow: {
+    fontSize: 8.5,
+    letterSpacing: 1.4,
+    fontWeight: '700',
+    color: TERRACOTTA,
+    marginLeft: 5,
+  },
+  tinyAside: {
+    fontSize: 8.5,
+    letterSpacing: 1.2,
+    fontWeight: '700',
+    color: 'rgba(42, 32, 51, 0.35)',
+  },
+  tinyText: {
+    fontSize: 20,
+    lineHeight: 28,
+    color: INK,
+    letterSpacing: -0.2,
+  },
+  tinyFootRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 14,
+  },
+  tinyFoot: {
+    flex: 1,
+    fontSize: 10.5,
+    color: MUTED,
+    marginRight: 10,
+  },
+  tinyShuffle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: TERRACOTTA,
+    paddingHorizontal: 13,
+    height: 34,
+    borderRadius: 999,
+  },
+  tinyShuffleText: {
+    color: CREAM,
+    fontSize: 11.5,
+    fontWeight: '600',
+    marginLeft: 5,
+  },
+
+  // Quick chat before wind-down
+  quickChatCard: {
+    marginTop: 14,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 250, 244, 0.82)',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    shadowColor: '#B0664A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.07,
+    shadowRadius: 20,
+    elevation: 2,
+  },
+  quickChatHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  quickChatOrb: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(176, 102, 74, 0.10)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  quickChatHeadText: { flex: 1 },
+  quickChatEyebrow: {
+    fontSize: 8.5,
+    letterSpacing: 1.4,
+    fontWeight: '700',
+    color: TERRACOTTA,
+  },
+  quickChatTitle: {
+    fontSize: 19,
+    color: INK,
+    marginTop: 2,
+    letterSpacing: -0.2,
+  },
+  quickChatRow: { flexDirection: 'row', alignItems: 'center' },
+  quickChatInput: {
+    flex: 1,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 102, 74, 0.16)',
+    paddingHorizontal: 16,
+    fontSize: 13.5,
+    color: INK,
+    marginRight: 9,
+  },
+  quickChatSend: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: TERRACOTTA,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Garden game card

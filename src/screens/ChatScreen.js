@@ -10,6 +10,7 @@ import {
   Platform,
   Modal,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -86,7 +87,7 @@ function mapMessage(message) {
   };
 }
 
-export default function ChatScreen({ onBack, onOpenBreathing }) {
+export default function ChatScreen({ onBack, onOpenBreathing, initialDraft, onDraftConsumed }) {
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -119,6 +120,25 @@ export default function ChatScreen({ onBack, onOpenBreathing }) {
     return () => {
       mountedRef.current = false;
     };
+  }, []);
+
+  useEffect(() => {
+    if (initialDraft) {
+      setInputText(initialDraft);
+      if (onDraftConsumed) onDraftConsumed();
+    }
+  }, [initialDraft]);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        requestAnimationFrame(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        });
+      }
+    );
+    return () => show.remove();
   }, []);
 
   const bootstrap = async () => {
@@ -388,7 +408,7 @@ export default function ChatScreen({ onBack, onOpenBreathing }) {
           </View>
 
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior="padding"
             style={styles.chatArea}
           >
             {isLoading ? (
@@ -405,6 +425,7 @@ export default function ChatScreen({ onBack, onOpenBreathing }) {
                 data={messages}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 contentContainerStyle={styles.messageList}
                 renderItem={renderMessage}
                 onContentSizeChange={() =>

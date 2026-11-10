@@ -45,6 +45,7 @@ function AppShell() {
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [booting, setBooting] = useState(true);
   const [user, setUser] = useState(null);
+  const [chatDraft, setChatDraft] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -178,6 +179,10 @@ function AppShell() {
           <HomeScreen
             user={user}
             onOpenChat={() => setCurrentScreen('chat')}
+            onOpenChatDraft={(text) => {
+              setChatDraft(text);
+              setCurrentScreen('chat');
+            }}
             onOpenBreathing={() => setCurrentScreen('breathing')}
           />
         )}
@@ -186,6 +191,8 @@ function AppShell() {
           <ChatScreen
             onBack={() => setCurrentScreen('home')}
             onOpenBreathing={() => setCurrentScreen('breathing')}
+            initialDraft={chatDraft}
+            onDraftConsumed={() => setChatDraft('')}
           />
         )}
 
