@@ -16,6 +16,7 @@ import {
 } from '@expo-google-fonts/fraunces';
 import AppIcon from '../components/AppIcon';
 import MeditatingBuddha from '../components/MeditatingBuddha';
+import { useLanguage } from '../lib/i18n';
 
 const INK = '#2A2033';
 const MUTED = 'rgba(42, 32, 51, 0.62)';
@@ -32,6 +33,7 @@ const PHASES = [
 ];
 
 export default function BreathingScreen({ onBack }) {
+  const { tr } = useLanguage();
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -146,7 +148,7 @@ export default function BreathingScreen({ onBack }) {
             </Animated.View>
 
             <LocalizedText style={[styles.phaseLabel, { fontFamily: serif }]}>
-              {PHASES[phaseIndex].label}
+              {tr(PHASES[phaseIndex].label)}
             </LocalizedText>
             <LocalizedText style={styles.subHint}>
               Let your breath follow the gentle rhythm of the circle
@@ -161,7 +163,7 @@ export default function BreathingScreen({ onBack }) {
                 <View key={phase.label} style={styles.phaseStep}>
                   <View style={[styles.phaseDot, isActive && styles.phaseDotActive]} />
                   <LocalizedText style={[styles.phaseName, isActive && styles.phaseNameActive]}>
-                    {phase.short}
+                    {tr(phase.short)}
                   </LocalizedText>
                 </View>
               );
