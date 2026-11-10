@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.solaceai.app",
-      "versionCode": 7,
+      "versionCode": 8,
       "permissions": [
         "SCHEDULE_EXACT_ALARM",
         "android.permission.RECORD_AUDIO"
@@ -70,5 +70,6 @@
     "owner": "swetha-ks"
   }
 }
+
 
 

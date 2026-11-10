@@ -313,6 +313,8 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
   const lift = useRef(new Animated.Value(0)).current;
   const cardUnfold = useRef(new Animated.Value(0)).current;
   const birdFly = useRef(new Animated.Value(0)).current;
+  const birdBob = useRef(new Animated.Value(0)).current;
+  const birbLoop = useRef(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -340,14 +342,38 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
       ]),
       Animated.sequence([
         Animated.delay(220),
-        Animated.timing(birdFly, {
+        Animated.spring(birdFly, {
           toValue: 1,
-          duration: 1350,
-          easing: Easing.inOut(Easing.quad),
+          speed: 7,
+          bounciness: 5,
           useNativeDriver: true,
         }),
       ]),
-    ]).start();
+    ]).start(() => {
+      birbLoop.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(birdBob, {
+            toValue: 1,
+            duration: 1900,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(birdBob, {
+            toValue: 0,
+            duration: 1900,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      birbLoop.current.start();
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (birbLoop.current) birbLoop.current.stop();
+    };
   }, []);
 
   const rise = {
@@ -374,26 +400,27 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 
   const birdStyle = {
     opacity: birdFly.interpolate({
-      inputRange: [0, 0.1, 0.82, 1],
-      outputRange: [0, 1, 1, 0],
+      inputRange: [0, 0.25],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
     }),
     transform: [
       {
         translateX: birdFly.interpolate({
-          inputRange: [0, 0.5, 1],
-          outputRange: [190, 40, -90],
+          inputRange: [0, 1],
+          outputRange: [150, 0],
         }),
       },
       {
-        translateY: birdFly.interpolate({
-          inputRange: [0, 0.28, 0.6, 1],
-          outputRange: [-18, -44, -16, -34],
+        translateY: birdBob.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -5],
         }),
       },
       {
         rotate: birdFly.interpolate({
-          inputRange: [0, 0.5, 1],
-          outputRange: ['-10deg', '3deg', '-12deg'],
+          inputRange: [0, 1],
+          outputRange: ['-16deg', '0deg'],
         }),
       },
     ],
@@ -732,6 +759,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
             </View>
 
             {/* Companion hero */}
+            <View style={styles.heroStage}>
             <Animated.View style={[styles.heroCardWrap, rise]}>
               <Animated.View style={[styles.heroUnfold, unfold]}>
               <LinearGradient
@@ -816,11 +844,12 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 
               <Animated.View pointerEvents="none" style={[styles.messenger, birdStyle]}>
                 <View style={styles.messengerEnvelope}>
-                  <AppIcon name="mail" size={11} color={TERRACOTTA} strokeWidth={1.7} />
+                  <AppIcon name="mail" size={12} color={TERRACOTTA} strokeWidth={1.7} />
                 </View>
-                <AppIcon name="bird" size={26} color={TERRACOTTA} strokeWidth={1.4} />
+                <AppIcon name="bird" size={32} color={TERRACOTTA} strokeWidth={1.4} />
               </Animated.View>
             </Animated.View>
+            </View>
             <Animated.View style={[styles.section, rise]}>
               <View style={styles.sectionHead}>
                 <View>
@@ -2139,9 +2168,12 @@ const styles = StyleSheet.create({
   },
 
   // Companion hero
-  heroCardWrap: {
-    marginTop: 20,
+  heroStage: {
+    marginTop: 8,
     marginBottom: 6,
+    paddingTop: 24,
+  },
+  heroCardWrap: {
     borderRadius: 30,
     shadowColor: '#B0664A',
     shadowOffset: { width: 0, height: 16 },
@@ -2155,21 +2187,23 @@ const styles = StyleSheet.create({
   },
   messenger: {
     position: 'absolute',
-    top: -32,
-    right: 8,
+    top: 0,
+    right: 14,
     flexDirection: 'row',
     alignItems: 'center',
+    zIndex: 20,
+    elevation: 20,
   },
   messengerEnvelope: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 7,
     backgroundColor: 'rgba(255, 255, 255, 0.94)',
     borderWidth: 1,
     borderColor: 'rgba(176, 102, 74, 0.28)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 2,
+    marginRight: 3,
   },
   heroCard: {
     borderRadius: 30,
