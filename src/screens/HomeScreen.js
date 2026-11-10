@@ -701,6 +701,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
       <View pointerEvents="none" style={[styles.orb, styles.orbBottom]} />
 
       <SafeAreaView edges={['top']} style={styles.safeArea}>
+        <KeyboardAvoidingView style={styles.keyboardFill} behavior="padding">
         <View style={styles.mobilePhoneFrame}>
           <ScrollView
             ref={scrollRef}
@@ -1326,6 +1327,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
             </Text>
           </ScrollView>
         </View>
+        </KeyboardAvoidingView>
 
         <VoiceListeningModal
           visible={isVoiceModalOpen}
@@ -2020,6 +2022,7 @@ export default function HomeScreen({ onOpenChat, onOpenBreathing, onOpenChatDraf
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: CREAM },
   safeArea: { flex: 1, alignItems: 'center' },
+  keyboardFill: { flex: 1, width: '100%' },
   mobilePhoneFrame: { width: '100%', flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingTop: 6, paddingBottom: 40 },
 
