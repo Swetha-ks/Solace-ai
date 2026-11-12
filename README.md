@@ -12,7 +12,7 @@ Built solo with React Native (Expo SDK 58) and a Node.js + Express backend power
 
 | | |
 |---|---|
-| **Android APK** | [Download the signed preview build](https://expo.dev/artifacts/eas/R0F__hHDGH0teezpDTgy8wU5qb-qFoiBCJpRn8lOsTc.apk) |
+| **Android APK** | [Download the signed preview build (versionCode 11, about 74 MB)](https://expo.dev/artifacts/eas/wuezQRTV7MHFa-wOSmpzK3ySBlcdSR8QaGSjfhAtde4.apk) |
 | **Backend API** | https://solace-ai-api-40bu.onrender.com |
 | **Health check** | https://solace-ai-api-40bu.onrender.com/api/health |
 | **Repository** | https://github.com/Swetha-ks/Solace-ai |
